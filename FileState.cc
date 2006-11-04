@@ -275,11 +275,9 @@ void FileState::ReadDirectory(StateEntry *		entry,
 
 FileState * FileState::CreateDatabase(const std::string& path,
 				      const std::string& dbfile,
-				      bool		 verbose)
+				      bool verbose)
 {
   std::list<Regex *> ignoreList;
-  ignoreList.push_back(new Regex("\\.files\\.db"));
-
   std::list<std::string> collection;
   collection.push_back(path);
 
@@ -304,7 +302,6 @@ FileState * FileState::Referent(bool verbose)
     collection.push_back((*i).second->Info.FullName);
 
   std::list<Regex *> ignoreList;
-  ignoreList.push_back(new Regex("\\.files\\.db"));
 
   FileState * tree = FileState::ReadState(collection, ignoreList, verbose);
   if (DebugMode) {

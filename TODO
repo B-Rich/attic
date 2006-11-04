@@ -1,0 +1,4 @@
+- Do directory building piecemeal, so that transfers may begin right
+  away, and huge memory footprints are not necessary.
+
+- Preserve hard links.

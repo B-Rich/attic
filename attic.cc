@@ -27,7 +27,6 @@ using namespace Attic;
 int main(int argc, char *args[])
 {
   FileState * comparator    = NULL;
-  std::string outputFile;
   std::string databaseFile;
   std::string referenceDir;
   bool	      bidirectional = false;
@@ -74,25 +73,23 @@ int main(int argc, char *args[])
 	databaseFile = File::ExpandPath(args[++i]);
       break;
 
-    case 'r':
-      if (i + 1 < argc)
-	referenceDir = File::ExpandPath(args[++i]);
-      break;
-
     case 'n':
       updateRemote = false;
       break;
 
-    case 'p':
+    case 'c':
+      // compute checksums...
       StateEntry::TrustMode = false;
       break;
 
-    case 'o':
-      if (i + 1 < argc)
-	outputFile = File::ExpandPath(args[++i]);
+    case 'x':
+      if (i + 1 < argc) {
+	ignoreList.push_back(new Regex(args[i + 1]));
+	i++;
+      }
       break;
 
-    case 'x':
+    case 'X':
       if (i + 1 < argc) {
 	FileInfo info(args[i + 1]);
 	if (info.FileKind() == FileInfo::File) {
@@ -102,8 +99,6 @@ int main(int argc, char *args[])
 	    std::getline(fin, s);
 	    ignoreList.push_back(new Regex(s));
 	  } while (! fin.eof() && fin.good());
-	} else {
-	  ignoreList.push_back(new Regex(args[i + 1]));
 	}
 	i++;
       }
@@ -111,8 +106,10 @@ int main(int argc, char *args[])
     }
   }
 
-  if (databaseFile.empty() && ! referenceDir.empty())
-    databaseFile = Path::Combine(referenceDir, ".file_db.xml");
+  if (realArgs.size() > 1) {
+    referenceDir = realArgs.back();
+    realArgs.pop_back();
+  }
 
   bool createdDatabase = false;
 
@@ -139,51 +136,52 @@ int main(int argc, char *args[])
       createdDatabase = true;
     }
   }
+  else if (! referenceDir.empty()) {
+    std::list<std::string> paths;
+    paths.push_back(referenceDir);
+    comparator = FileState::ReadState(paths, ignoreList, verboseOutput);
+  }
 
   if (realArgs.empty() && comparator == NULL) {
     std::cout << "usage: fstate <OPTIONS> [-d DATABASE] [DIRECTORY ...]\n\
 \n\
-ere options is one or more of:\n\
--d FILE  Specify a database to compare with\n\
--r DIR   Specify a remote directory to reconcile against\n\
--u       Update the given remote directory (-r)\n\
--p       Use checksums instead of just length & timestamps\n\
-         This is vastly slower, but can optimize network traffic\n\
--b       Perform a bi-directional update between the remote\n\
-         directory (-r) and the directory specified on the\n\
-         command-line, using the given database (-d) as the\n\
-         common ancestor\n\
--G DIR   When updating, use DIR to keep generational data\n\
--V       Verify the database after an update is performed\n\
--v       Be a bit more verbose\n\
--D       Turn on debugging (be a lot more verbose)\n\
--x REGEX Ignore all entries matching REGEX\n\
--x FILE  Ignore all entries matching any regexp listed in FILE\n\
+Where options is one or more of:\n\
+  -d FILE  Specify a database to compare with\n\
+  -r DIR   Specify a remote directory to reconcile against\n\
+  -u       Update the given remote directory (-r)\n\
+  -c       Use checksums instead of just length & timestamps This is MUCH\n\
+           slower, but can optimize network traffic by discovering when files\n\
+           have been moved\n\
+  -b       Perform a bi-directional update between the remote directory (-r)\n\
+           and the directory specified on the command-line, using the given\n\
+           database (-d) as the common ancestor\n\
+  -G DIR   When updating, use DIR to keep generational data\n\
+  -V       Verify the database after an update is performed\n\
+  -v       Be a bit more verbose\n\
+  -D       Turn on debugging (be a lot more verbose)\n\
+  -x REGEX Ignore all entries matching REGEX\n\
+  -X FILE  Ignore all entries matching any regexp listed in FILE\n\
 \n\
-re are some of  the most typical forms of usage:\n\
+Here are some of the more typical forms of usage:\n\
 \n\
 Copy or update the directory foo to /tmp/foo:\n\
-  fstate -u -r /tmp/foo foo\n\
+   fstate foo /tmp/foo\n\
 \n\
-Compare the directory foo to /tmp/foo:\n\
-  fstate -r /tmp/foo foo\n\
+Compare the directory foo with /tmp/foo:\n\
+   fstate -n foo /tmp/foo\n\
 \n\
-Copy/update foo, but keep state in ~/db.xml:\n\
-  fstate -u -d ~/db.xml -r /tmp/foo foo\n\
+Copy/update foo, but keep state in files.db:\n\
+   fstate -d files.db foo /tmp/foo\n\
 \n\
 Record foo's state in a database for future checking:\n\
-  fstate -d ~/db.xml foo\n\
+   fstate -d files.db foo\n\
 \n\
 Check foo's current state against an existing database:\n\
-  fstate -d ~/db.xml foo\n\
-This will report any alterations made since the database.\n\
+   fstate -n -d files.db foo\n\
+This report alterations made since the database was last updated.\n\
 \n\
 Update the database to reflect foo's recent changes:\n\
-  fstate -u -d ~/db.xml foo\n\
-\n\
-te: Typically when reconciling, fstate optimizes file copies by looking for\n\
-ved files on the destination device.  If space is at a premium, however, the\n\
- flag will cause all deletions to occur first." << std::endl;
+   fstate -d files.db foo" << std::endl;
     return 1;
   }
 
@@ -263,7 +261,10 @@ ved files on the destination device.  If space is at a premium, however, the\n\
 
 	  state = FileState::CreateDatabase(referenceDir, "", verboseOutput);
 	  comparator->CompareTo(state);
-	  comparator->ReportChanges();
+	  if (! comparator->Changes.empty()) {
+	    comparator->ReportChanges();
+	    std::cout << "ERROR!" << std::endl;
+	  }
 	}
       }
       else if (! createdDatabase) {
@@ -280,7 +281,7 @@ ved files on the destination device.  If space is at a premium, however, the\n\
   }
   else {
     if (verboseOutput)
-      std::cout << "Writing state to database files.db ..." << std::endl;
+      std::cout << "Writing state to database ./files.db ..." << std::endl;
     state->WriteTo("files.db");
   }
 
