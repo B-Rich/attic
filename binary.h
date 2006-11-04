@@ -4,8 +4,6 @@
 #include <string>
 #include <iostream>
 
-namespace Attic {
-
 template <typename T>
 inline void read_binary_number_nocheck(std::istream& in, T& num) {
   in.read((char *)&num, sizeof(num));
@@ -217,7 +215,5 @@ void write_binary_long(std::ostream& out, T num)
 }
 
 void write_binary_string(std::ostream& out, const std::string& str);
-
-} // namespace ledger
 
 #endif // _BINARY_H

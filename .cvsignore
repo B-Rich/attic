@@ -1,6 +1,8 @@
-attic
-*.xml
 *.db
-.gdb_history
 *.mdb
+*.xml
+.deps
+.gdb_history
+.libs
+attic
 ignore
