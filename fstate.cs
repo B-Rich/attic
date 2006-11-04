@@ -26,6 +26,8 @@ namespace FileState
 		public Kind   EntryKind;
 		public bool   DeletePending;
 
+		public static bool TrustMode;
+
 		public StateEntry Parent;
 		public List<StateEntry> Children;
 
@@ -183,9 +185,9 @@ namespace FileState
 				w.WriteString(Length.ToString());
 				w.WriteEndElement();
 
-				if (Checksum != null) {
+				if (checksum != null) {
 					w.WriteStartElement("md5");
-					w.WriteString(Checksum);
+					w.WriteString(checksum);
 					w.WriteEndElement();
 				}
 			}
@@ -306,7 +308,8 @@ namespace FileState
 			switch (EntryKind) {
 			case Kind.File:
 				StateEntry other = null;
-				if (! dirToCopyInto.FileStateObj.CleanFirst)
+				if (! dirToCopyInto.FileStateObj.CleanFirst &&
+					! StateEntry.TrustMode)
 					other = dirToCopyInto.FileStateObj.FindDuplicate(this);
 
 				if (other != null) {
@@ -501,14 +504,17 @@ namespace FileState
 											  EntryKind, other.EntryKind);
 			}
 			else if (EntryKind == Kind.File) {
-				if (Checksum != other.Checksum)
-					reasonChanged = "contents changed";
-				else if (Length != other.Length)
+				if (Length != other.Length)
 					reasonChanged = String.Format("length changed ({0} != {1})",
 												  Length, other.Length);
+				else if (LastWriteTime != other.LastWriteTime)
+					reasonChanged = String.Format("modtime changed ({0} != {1})",
+												  LastWriteTime, other.LastWriteTime);
 				else if (Attributes != other.Attributes)
 					reasonChanged = String.Format("file attributes changed ({0} != {1})",
 												  Attributes, other.Attributes);
+				else if (! TrustMode && Checksum != other.Checksum)
+					reasonChanged = "contents changed";
 			}
 
 			if (reasonChanged != null)
@@ -885,10 +891,11 @@ namespace FileState
 			else {
 				StateEntry entry = new StateEntry(this, parent, path, relativePath,
 												  StateEntry.Kind.File);
-				string csum = entry.Checksum;
-				if (csum != null)
-					ChecksumDict[csum] = entry;
-
+				if (! StateEntry.TrustMode) {
+					string csum = entry.Checksum;
+					if (csum != null)
+						ChecksumDict[csum] = entry;
+				}
 				return entry;
 			}
 		}
@@ -963,6 +970,7 @@ namespace FileState
 			bool	  updateRemote	= false;
 			bool	  reportFiles	= false;
 			bool	  verboseOutput = false;
+			bool	  verifyData    = false;
 			bool	  cleanFirst    = false;
 			string	  generations	= null;
 
@@ -977,6 +985,10 @@ namespace FileState
 
 				case "-v":
 					verboseOutput = true;
+					break;
+
+				case "-V":
+					verifyData = true;
 					break;
 
 				case "-C":
@@ -1000,6 +1012,10 @@ namespace FileState
 
 				case "-u":
 					updateRemote = true;
+					break;
+
+				case "-t":
+					StateEntry.TrustMode = true;
 					break;
 
 				case "-o":
@@ -1047,22 +1063,51 @@ namespace FileState
 				}
 			}
 
-			TextWriter outStream = Console.Out;
-			if (outputFile != null) {
-				FileInfo info = new FileInfo(outputFile);
-				if (info.Exists)
-					info.Delete();
-
-				info.Directory.Create();
-
-				FileStream fs = info.OpenWrite();
-				StreamWriter sw = new StreamWriter(fs, Encoding.UTF8);
-				outStream = sw;
-			}
-
-			if (realArgs.Count == 0)
+			if (realArgs.Count == 0 && comparator != null &&
+				comparator.Root.Children != null)
 				foreach (StateEntry topdir in comparator.Root.Children)
 					realArgs.Add(topdir.Pathname);
+
+			if (realArgs.Count == 0) {
+				Console.WriteLine(@"usage: fstate <OPTIONS> [-d DATABASE] [DIRECTORY ...]
+
+Where options is one or more of:
+  -C       Delete before updating when reconciling
+  -D       Turn on debugging (be a lot more verbose)
+  -d FILE  Specify a database to compare with
+  -g DIR   When updating, use DIR to keep generational data
+  -r DIR   Specify a remote directory to reconcile against
+  -t       Don't use checksum, but trust last write timestamps
+  -u       Update the given remote directory
+  -v       Be a bit more verbose
+  -x FILE  Ignore all entries matching a regexp found in FILE
+
+Here are some of  the most typical forms of usage:
+
+  Copy or update the directory foo to /tmp/foo:
+    fstate -u -r /tmp/foo foo
+
+  Compare the directory foo to /tmp/foo:
+    fstate -r /tmp/foo foo
+
+  Copy/update foo, but keep state in ~/db.xml:
+    fstate -u -d ~/db.xml -r /tmp/foo foo
+
+  Record foo's state in a database for future checking:
+    fstate -d ~/db.xml foo
+
+  Check foo's current state against an existing database:
+    fstate -d ~/db.xml foo
+  This will report any alterations made since the database.
+
+  Update the database to reflect foo's recent changes:
+    fstate -u -d ~/db.xml foo
+
+Note: Typically when reconciling, fstate optimizes file copies by looking for
+moved files on the destination device.  If space is at a premium, however, the
+-C flag will cause all deletions to occur first.");
+				return 1;
+			}
 
 			if (verboseOutput)
 				Console.WriteLine("Reading files ...");
@@ -1077,56 +1122,79 @@ namespace FileState
 					Console.WriteLine("Comparing details ...");
 				comparator.CompareTo(state);
 
-				if (updateRemote && comparator.Changes.Count > 0) {
-					string genDir = null;
-					if (updateRemote && generations != null) {
-						genDir = Path.Combine(generations,
-											  DateTime.Now.ToString("yyyy-MM-dd.HHmmss"));
-						if (verboseOutput)
-							Console.WriteLine("Backing up to generation directory: " + genDir);
+				if (comparator.Changes.Count > 0) {
+					if (updateRemote) {
+						if (referenceDir != null) {
+							string genDir = null;
+							if (updateRemote && generations != null) {
+								genDir = Path.Combine(generations,
+													  DateTime.Now.ToString("yyyy-MM-dd.HHmmss"));
+								if (verboseOutput)
+									Console.WriteLine("Backing up to generation directory: " +
+													  genDir);
 
-						comparator.GenerationPath = new DirectoryInfo(genDir);
-					}
+								comparator.GenerationPath = new DirectoryInfo(genDir);
+							}
 
-					if (verboseOutput)
-						Console.WriteLine("Updating files in " + referenceDir + " ...");
-					comparator.CleanFirst = cleanFirst;
-					comparator.PerformChanges();
+							if (verboseOutput)
+								Console.WriteLine("Updating files in " + referenceDir + " ...");
+							comparator.CleanFirst = cleanFirst;
+							comparator.PerformChanges();
+						}
 
-					if (verboseOutput)
-						Console.WriteLine("Updating database in " + databaseFile + " ...");
-					comparator.WriteTo(databaseFile);
+						if (databaseFile != null) {
+							if (verboseOutput)
+								Console.WriteLine("Updating database in " + databaseFile + " ...");
+							comparator.WriteTo(databaseFile);
+						}
 
-					if (referenceDir != null) {
-						if (verboseOutput)
-							Console.WriteLine("Verifying database ...");
+						if (referenceDir != null && verifyData) {
+							if (verboseOutput)
+								Console.WriteLine("Verifying database ...");
 
-						List<string> collection = new List<string>();
-						collection.Add(referenceDir);
+							List<string> collection = new List<string>();
+							collection.Add(referenceDir);
 
-						List<Regex> ignore = new List<Regex>();
-						ignore.Add(new Regex("\\.file_db\\.xml$"));
+							List<Regex> ignore = new List<Regex>();
+							ignore.Add(new Regex("\\.file_db\\.xml$"));
 
-						state = FileState.ReadState(collection, ignore, false);
+							state = FileState.ReadState(collection, ignore, false);
 
-						comparator.CompareTo(state);
+							comparator.CompareTo(state);
+							comparator.ReportChanges();
+						}
+					} else {
 						comparator.ReportChanges();
 					}
 				}
 			}
 			else if (databaseFile != null) {
+				if (verboseOutput)
+					Console.WriteLine("Updating database in " + databaseFile + " ...");
 				state.WriteTo(databaseFile);
 			}
 			else {
+				TextWriter outStream = Console.Out;
+				if (outputFile != null) {
+					FileInfo info = new FileInfo(outputFile);
+					if (info.Exists)
+						info.Delete();
+
+					info.Directory.Create();
+
+					FileStream fs = info.OpenWrite();
+					StreamWriter sw = new StreamWriter(fs, Encoding.UTF8);
+					outStream = sw;
+				}
+
 				XmlTextWriter xw = new XmlTextWriter(outStream);
 				xw.Formatting = Formatting.Indented;
 				xw.WriteStartDocument();
 				state.WriteTo(xw);
 
 				outStream.WriteLine();
+				outStream.Close();
 			}
-
-			outStream.Close();
 
 			return 0;
 		}

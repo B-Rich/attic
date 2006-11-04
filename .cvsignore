@@ -1,0 +1,6 @@
+attic
+*.xml
+*.db
+.gdb_history
+*.mdb
+ignore
