@@ -313,18 +313,17 @@ void StateEntry::CompareTo(StateEntry * other, StateEntry * target)
   for (children_map::iterator i = Children.begin();
        i != Children.end();
        i++) {
-    StateEntry * goalChild  = target ? goal->FindChild((*i).first) : NULL;
     StateEntry * otherChild = other->FindChild((*i).first);
     if (otherChild != NULL) {
       otherChild->Handled = true;
+
+      StateEntry * goalChild  = target ? goal->FindChild((*i).first) : NULL;
       if (! target || goalChild)
 	(*i).second->CompareTo(otherChild, goalChild);
-    } else {
-      if (! target || goalChild) {
-	FileStateObj->RegisterDelete((*i).second,
-				     goalChild ? goalChild : (*i).second);
-	updateProps = true;
-      }
+    }
+    else if (! target) {
+      FileStateObj->RegisterDelete((*i).second, (*i).second);
+      updateProps = true;
     }
   }
 

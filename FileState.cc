@@ -47,7 +47,7 @@ void FileState::RegisterDelete(StateEntry * baseEntry, StateEntry * entry)
     }
 
   Changes.push_back(new ObjectDelete(false, entry));
-  if (baseEntry != entry)
+  if (baseEntry && baseEntry != entry)
     baseEntry->FileStateObj->Changes.push_back(new ObjectDelete(true, baseEntry));
 }
 
