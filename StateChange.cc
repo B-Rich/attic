@@ -1,5 +1,5 @@
 #include "StateChange.h"
-#include "FileState.h"
+#include "StateMap.h"
 #include "StateEntry.h"
 
 #include <iostream>
@@ -93,7 +93,7 @@ void ObjectUpdate::Identify()
 void ObjectUpdate::Prepare()
 {
   if (DatabaseOnly) return;
-  entryToUpdate->FileStateObj->BackupEntry(entryToUpdate);
+  entryToUpdate->StateMapObj->BackupEntry(entryToUpdate);
 }
 
 void ObjectUpdate::Perform()
@@ -157,7 +157,7 @@ void ObjectDelete::Prepare()
 {
   if (DatabaseOnly) return;
   entryToDelete->MarkDeletePending();
-  entryToDelete->FileStateObj->BackupEntry(entryToDelete);
+  entryToDelete->StateMapObj->BackupEntry(entryToDelete);
 }
 
 void ObjectDelete::Perform()

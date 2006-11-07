@@ -1,5 +1,5 @@
 #include "StateEntry.h"
-#include "FileState.h"
+#include "StateMap.h"
 #include "binary.h"
 
 #define BINARY_VERSION 0x00000001L
@@ -126,7 +126,7 @@ void StateEntry::Report() const
 }
 
 StateEntry *
-StateEntry::LoadElement(FileState *	   FileStateObj,
+StateEntry::LoadElement(StateMap *	   StateMapObj,
 			StateEntry *	   Parent,
 			const std::string& parentPath,
 			const std::string& relativePath,
@@ -176,13 +176,13 @@ StateEntry::LoadElement(FileState *	   FileStateObj,
       return NULL;
   }
 
-  StateEntry * entry = new StateEntry(FileStateObj, Parent, info);
+  StateEntry * entry = new StateEntry(StateMapObj, Parent, info);
   if (kind == FileInfo::File)
-    FileStateObj->ChecksumDict[info.Checksum()] = entry;
+    StateMapObj->ChecksumDict[info.Checksum()] = entry;
 
   int children = read_binary_long<int>(data);
   for (int i = 0; i < children; i++)
-    LoadElement(FileStateObj, entry, entry->Info.FullName,
+    LoadElement(StateMapObj, entry, entry->Info.FullName,
 		entry->Info.RelativeName, data);
 
   return entry;
@@ -190,7 +190,7 @@ StateEntry::LoadElement(FileState *	   FileStateObj,
 
 StateEntry * StateEntry::CreateChild(const std::string& name)
 {
-  return new StateEntry(FileStateObj, this,
+  return new StateEntry(StateMapObj, this,
 			FileInfo(Path::Combine(Info.FullName, name),
 				 Path::Combine(Info.RelativeName, name)));
 }
@@ -202,10 +202,10 @@ bool StateEntry::Copy(StateEntry * dirToCopyInto, bool moveOnly)
 
   switch (Info.FileKind()) {
   case FileInfo::File: {
-    StateEntry * other = dirToCopyInto->FileStateObj->FindDuplicate(this);
+    StateEntry * other = dirToCopyInto->StateMapObj->FindDuplicate(this);
     if (other != NULL) {
       if (other->DeletePending && moveOnly) {
-	other->FileStateObj->BackupEntry(other);
+	other->StateMapObj->BackupEntry(other);
 	other->Move(targetPath);
 
 	other->DeletePending = false;
@@ -275,24 +275,24 @@ void StateEntry::CompareTo(StateEntry * other, StateEntry * target)
 
   if (fileKind != other->Info.FileKind()) {
     if (fileKind != FileInfo::Nonexistant)
-      goal->FileStateObj->RegisterDelete(this, goal);
-    goal->FileStateObj->RegisterCopy(other, Parent, goal->Parent);
+      goal->StateMapObj->RegisterDelete(this, goal);
+    goal->StateMapObj->RegisterCopy(other, Parent, goal->Parent);
     return;
   }
   else if (fileKind == FileInfo::File) {
     if (Info.Length() != other->Info.Length()) {
-      goal->FileStateObj->RegisterUpdate(this, goal, other, "length");
+      goal->StateMapObj->RegisterUpdate(this, goal, other, "length");
       updateRegistered = true;
     }
     else if (Info.LastWriteTime() != other->Info.LastWriteTime() ||
 	     (! TrustMode && Info.Checksum() != other->Info.Checksum())) {
-      goal->FileStateObj->RegisterUpdate(this, goal, other, "contents");
+      goal->StateMapObj->RegisterUpdate(this, goal, other, "contents");
       updateRegistered = true;
     }
     else if (Info.Permissions()	!= other->Info.Permissions() ||
 	     Info.OwnerId()	!= other->Info.OwnerId() ||
 	     Info.GroupId()	!= other->Info.GroupId()) {
-      goal->FileStateObj->RegisterUpdateProps(this, goal, this != goal ? goal : other,
+      goal->StateMapObj->RegisterUpdateProps(this, goal, this != goal ? goal : other,
 					      "attributes");
       updateRegistered = true;
     }
@@ -303,7 +303,7 @@ void StateEntry::CompareTo(StateEntry * other, StateEntry * target)
 	    Info.Permissions()	 != other->Info.Permissions() ||
 	    Info.OwnerId()	 != other->Info.OwnerId() ||
 	    Info.GroupId()	 != other->Info.GroupId())) {
-    goal->FileStateObj->RegisterUpdateProps(this, goal, this != goal ? goal : other,
+    goal->StateMapObj->RegisterUpdateProps(this, goal, this != goal ? goal : other,
 					    "modtime changed");
     updateRegistered = true;
   }
@@ -322,7 +322,7 @@ void StateEntry::CompareTo(StateEntry * other, StateEntry * target)
 	(*i).second->CompareTo(otherChild, goalChild);
     }
     else if (! target) {
-      FileStateObj->RegisterDelete((*i).second, (*i).second);
+      StateMapObj->RegisterDelete((*i).second, (*i).second);
       updateProps = true;
     }
   }
@@ -334,13 +334,13 @@ void StateEntry::CompareTo(StateEntry * other, StateEntry * target)
       (*i).second->Handled = false;
     }
     else if (FindChild((*i).first) == NULL) {
-      goal->FileStateObj->RegisterCopy((*i).second, this, goal);
+      goal->StateMapObj->RegisterCopy((*i).second, this, goal);
       updateProps = true;
     }
   }
 
   if (updateProps && ! updateRegistered)
-    goal->FileStateObj->RegisterUpdateProps(this, goal, other);
+    goal->StateMapObj->RegisterUpdateProps(this, goal, other);
 }
 
 } // namespace Attic

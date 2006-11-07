@@ -7,7 +7,7 @@
 
 namespace Attic {
 
-class FileState;
+class StateMap;
 class StateEntry
 {
 public:
@@ -16,7 +16,7 @@ public:
   bool	       DeletePending;
   int	       Depth;
   static bool  TrustMode;
-  FileState *  FileStateObj;
+  StateMap *  StateMapObj;
   StateEntry * Parent;
 
   typedef std::map<std::string, StateEntry *>  children_map;
@@ -24,12 +24,23 @@ public:
 
   children_map Children;
 
-  StateEntry(FileState *     _FileStateObj,
+  StateEntry(StateMap *     _StateMapObj,
 	     StateEntry *    _Parent,
 	     const FileInfo& _Info = FileInfo())
     : Handled(false), DeletePending(false),
       Depth(_Parent ? _Parent->Depth + 1 : 0),
-      FileStateObj(_FileStateObj), Parent(_Parent), Info(_Info)
+      StateMapObj(_StateMapObj), Parent(_Parent), Info(_Info)
+  {
+    if (Parent != NULL)
+      Parent->AppendChild(this);
+  }
+
+  StateEntry(StateMap *     _StateMapObj,
+	     StateEntry *    _Parent,
+	     const std::string& path)
+    : Handled(false), DeletePending(false),
+      Depth(_Parent ? _Parent->Depth + 1 : 0),
+      StateMapObj(_StateMapObj), Parent(_Parent), Info(path)
   {
     if (Parent != NULL)
       Parent->AppendChild(this);
@@ -45,7 +56,7 @@ public:
   void WriteTo(std::ostream& w, bool top);
 
   static StateEntry *
-  LoadElement(FileState * FileStateObj, StateEntry * Parent,
+  LoadElement(StateMap * StateMapObj, StateEntry * Parent,
 	      const std::string& parentPath,
 	      const std::string& relativePath,
 	      char *& data);

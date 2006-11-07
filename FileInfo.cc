@@ -20,6 +20,11 @@
 
 #include "FileInfo.h"
 
+#define HAVE_REALPATH
+#ifdef HAVE_REALPATH
+extern "C" char *realpath(const char *, char resolved_path[]);
+#endif
+
 md5sum_t md5sum_t::checksum(const std::string& path, md5sum_t& csum)
 {
   md5_state_t state;
@@ -140,7 +145,7 @@ void FileInfo::dostat() const
   }
 }
 
-void FileInfo::GetFileInfos(std::list<FileInfo>& store)
+void FileInfo::GetFileInfos(std::deque<FileInfo>& store)
 {
   DIR * dirp = opendir(FullName.c_str());
   if (dirp == NULL)
@@ -193,9 +198,9 @@ void FileInfo::CreateDirectory()
 void FileInfo::Delete()
 {
   if (IsDirectory()) {
-    std::list<FileInfo> infos;
+    std::deque<FileInfo> infos;
     GetFileInfos(infos);
-    for (std::list<FileInfo>::iterator i = infos.begin();
+    for (std::deque<FileInfo>::iterator i = infos.begin();
 	 i != infos.end();
 	 i++)
       (*i).Delete();

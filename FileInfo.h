@@ -2,7 +2,7 @@
 #define _FILEINFO_H
 
 #include <string>
-#include <list>
+#include <deque>
 
 #include <sys/stat.h>
 
@@ -85,7 +85,8 @@ public:
     Reset();
   }
 
-  FileInfo(const std::string& _FullName, const std::string& _RelativeName)
+  FileInfo(const std::string& _FullName,
+	   const std::string& _RelativeName)
     : FullName(_FullName),
       RelativeName(_RelativeName),
       Name(Path::GetFileName(_FullName)) {
@@ -195,7 +196,7 @@ public:
   }
 
   void CreateDirectory();
-  void GetFileInfos(std::list<FileInfo>& store);
+  void GetFileInfos(std::deque<FileInfo>& store);
   void Delete();
 };
 

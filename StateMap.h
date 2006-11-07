@@ -4,18 +4,29 @@
 #include <vector>
 
 #include "Regex.h"
-#include "StateChange.h"
 #include "StateEntry.h"
+#include "StateChange.h"
 
 namespace Attic {
 
-class FileState
+class StateMap
 {
 public:
   StateEntry * Root;
-  FileInfo *   GenerationPath;
 
   std::vector<StateChange *> Changes;
+
+  StateMap() : Root(NULL) {}
+
+  StateMap(const std::string& rootPath)
+    : Root(new StateEntry(this, NULL, rootPath)) {}
+
+  ~StateMap() {
+    delete Root;
+  }
+
+  void BindToFile(const std::string& dbPath) {
+  }
 
   void RegisterUpdate(StateEntry * baseEntryToUpdate,
 		      StateEntry * entryToUpdate,
@@ -38,28 +49,28 @@ public:
 
   StateEntry * FindDuplicate(StateEntry * child);
 
-  static FileState * CreateDatabase(const std::string& path,
+  static StateMap * CreateDatabase(const std::string& path,
 				    const std::string& dbfile,
 				    bool verbose);
 
-  FileState * Referent(bool verbose);
+  StateMap * Referent(bool verbose);
 
-  static FileState * ReadState(const std::list<std::string>& paths,
-			       const std::list<Regex *>& IgnoreList,
+  static StateMap * ReadState(const std::deque<std::string>& paths,
+			       const std::deque<Regex *>& IgnoreList,
 			       bool verboseOutput);
     
   StateEntry * ReadEntry(StateEntry * parent, const std::string& path,
 			 const std::string& relativePath,
-			 const std::list<Regex *>& IgnoreList,
+			 const std::deque<Regex *>& IgnoreList,
 			 bool verboseOutput);
 
   void ReadDirectory(StateEntry * entry, const std::string& path,
 		     const std::string& relativePath,
-		     const std::list<Regex *>& IgnoreList,
+		     const std::deque<Regex *>& IgnoreList,
 		     bool verboseOutput);
 
-  static FileState * ReadState(const std::string& path,
-			       const std::list<Regex *>& IgnoreList,
+  static StateMap * ReadState(const std::string& path,
+			       const std::deque<Regex *>& IgnoreList,
 			       bool verboseOutput);
 
   StateEntry * LoadElements(char *& data, StateEntry * parent) {
@@ -67,11 +78,11 @@ public:
   }
 
   void BackupEntry(StateEntry * entry);
-  void MergeChanges(FileState * other);
+  void MergeChanges(StateMap * other);
   void PerformChanges();
   void ReportChanges();
 
-  void CompareTo(FileState * other, FileState * target = NULL) {
+  void CompareTo(StateMap * other, StateMap * target = NULL) {
     Root->CompareTo(other->Root, target ? target->Root : NULL);
   }
 

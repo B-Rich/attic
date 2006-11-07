@@ -1,24 +1,4 @@
-#include <list>
-#include <vector>
-#include <map>
-#include <string>
-#include <exception>
-#include <iostream>
-#include <fstream>
-#include <ctime>
-
-#include "error.h"
-#include "binary.h"
-#include "Regex.h"
-#include "FileInfo.h"
-#include "StateChange.h"
-#include "FileState.h"
-#include "StateEntry.h"
-
-#define HAVE_REALPATH
-#ifdef HAVE_REALPATH
-extern "C" char *realpath(const char *, char resolved_path[]);
-#endif
+#include "DataPool.h"
 
 bool DebugMode = false;
 
@@ -26,29 +6,20 @@ using namespace Attic;
 
 int main(int argc, char *args[])
 {
-  FileState * comparator    = NULL;
-  std::string databaseFile;
-  std::string referenceDir;
-  bool	      bidirectional = false;
-  bool	      updateRemote  = true;
-  bool	      verboseOutput = false;
-  bool	      verifyData    = false;
-  std::string generations;
-
-  std::list<std::string> realArgs;
-  std::list<Regex *>	 ignoreList;
-
   try {
+
+  DataPool pool;
+  Location optionTemplate;
 
   for (int i = 1; i < argc; i++) {
     if (args[i][0] != '-') {
-      realArgs.push_back(File::ExpandPath(args[i]));
+      pool.Locations.push_back(new Location(File::ExpandPath(args[i])));
       continue;
     }
 
     switch (args[i][1]) {
     case 'b':
-      bidirectional = true;
+      optionTemplate.Bidirectional = true;
       break;
 
     case 'D':
@@ -56,35 +27,37 @@ int main(int argc, char *args[])
       break;
 
     case 'v':
-      verboseOutput = true;
+      optionTemplate.VerboseLogging = true;
       break;
 
     case 'V':
-      verifyData = true;
+      optionTemplate.VerifyResults = true;
       break;
 
+#if 0
     case 'G':
       if (i + 1 < argc)
 	generations = File::ExpandPath(args[++i]);
       break;
+#endif
 
     case 'd':
       if (i + 1 < argc)
-	databaseFile = File::ExpandPath(args[++i]);
+	pool.BindAncestorToFile(File::ExpandPath(args[++i]));
       break;
 
     case 'n':
-      updateRemote = false;
+      optionTemplate.LoggingOnly = true;
       break;
 
     case 'c':
       // compute checksums...
-      StateEntry::TrustMode = false;
+      optionTemplate.TrustTimestamps = false;
       break;
 
     case 'x':
       if (i + 1 < argc) {
-	ignoreList.push_back(new Regex(args[i + 1]));
+	optionTemplate.Regexps.push_back(new Regex(args[i + 1]));
 	i++;
       }
       break;
@@ -97,7 +70,7 @@ int main(int argc, char *args[])
 	  do {
 	    std::string s;
 	    std::getline(fin, s);
-	    ignoreList.push_back(new Regex(s));
+	    optionTemplate.Regexps.push_back(new Regex(s));
 	  } while (! fin.eof() && fin.good());
 	}
 	i++;
@@ -106,97 +79,66 @@ int main(int argc, char *args[])
     }
   }
 
-  if (realArgs.size() > 1) {
-    referenceDir = realArgs.back();
-    realArgs.pop_back();
-  }
-
-  bool createdDatabase = false;
-
-  if (! databaseFile.empty()) {
-    FileInfo dbInfo(databaseFile);
-    if (dbInfo.Exists()) {
-      std::list<Regex *> temp;
-      if (verboseOutput)
-	std::cout << "reading database " << databaseFile
-		  << "..." << std::endl;
-      comparator = FileState::ReadState(dbInfo.FullName, temp, false);
-      if (comparator != NULL && DebugMode) {
-	std::cout << "read database state:" << std::endl;
-	comparator->Report();
-      }
-    }
-
-    if (comparator == NULL && ! referenceDir.empty()) {
-      if (verboseOutput)
-	std::cout << "Building database in " << dbInfo.FullName
-		  << " ..." << std::endl;
-      comparator = FileState::CreateDatabase(referenceDir, dbInfo.FullName,
-					     verboseOutput);
-      createdDatabase = true;
-    }
-  }
-  else if (! referenceDir.empty()) {
-    std::list<std::string> paths;
-    paths.push_back(referenceDir);
-    comparator = FileState::ReadState(paths, ignoreList, verboseOutput);
-  }
-
-  if (realArgs.empty() && comparator == NULL) {
-    std::cout << "usage: fstate <OPTIONS> [-d DATABASE] [DIRECTORY ...]\n\
+  if (pool.Locations.empty()) {
+    std::cout << "usage: attic <OPTIONS> [-d DATABASE] [DIRECTORY ...]\n\
 \n\
 Where options is one or more of:\n\
-  -d FILE  Specify a database to compare with\n\
-  -r DIR   Specify a remote directory to reconcile against\n\
-  -u       Update the given remote directory (-r)\n\
-  -c       Use checksums instead of just length & timestamps This is MUCH\n\
-           slower, but can optimize network traffic by discovering when files\n\
-           have been moved\n\
-  -b       Perform a bi-directional update between the remote directory (-r)\n\
-           and the directory specified on the command-line, using the given\n\
-           database (-d) as the common ancestor\n\
-  -G DIR   When updating, use DIR to keep generational data\n\
-  -V       Verify the database after an update is performed\n\
-  -v       Be a bit more verbose\n\
-  -D       Turn on debugging (be a lot more verbose)\n\
-  -x REGEX Ignore all entries matching REGEX\n\
-  -X FILE  Ignore all entries matching any regexp listed in FILE\n\
+    -d FILE   Specify a database to compare with\n\
+    -r DIR    Specify a remote directory to reconcile against\n\
+    -u        Update the given remote directory (-r)\n\
+    -c        Use checksums instead of just length & timestamps.\n\
+              This is MUCH slower, but can optimize network traffic\n\
+              by discovering when files have been moved\n\
+    -b        Perform a bi-directional update among all directories\n\
+              specified on the command-line, using the given\n\
+              database (-d) as the common ancestor\n\
+    -G DIR    When updating, use DIR to keep generational data\n\
+    -V        Verify the database after an update is performed\n\
+    -v        Be a bit more verbose\n\
+    -D        Turn on debugging (be a lot more verbose)\n\
+    -x REGEX  Ignore all entries matching REGEX\n\
+    -X FILE   Ignore all entries matching any regexp listed in FILE\n\
 \n\
 Here are some of the more typical forms of usage:\n\
 \n\
 Copy or update the directory foo to /tmp/foo:\n\
-   fstate foo /tmp/foo\n\
+    attic foo /tmp/foo\n\
 \n\
 Compare the directory foo with /tmp/foo:\n\
-   fstate -n foo /tmp/foo\n\
+    attic -n foo /tmp/foo\n\
 \n\
 Copy/update foo, but keep state in files.db:\n\
-   fstate -d files.db foo /tmp/foo\n\
+    attic -d files.db foo /tmp/foo\n\
 \n\
 Record foo's state in a database for future checking:\n\
-   fstate -d files.db foo\n\
+    attic -d files.db foo\n\
 \n\
 Check foo's current state against an existing database:\n\
-   fstate -n -d files.db foo\n\
+    attic -n -d files.db foo\n\
 This report alterations made since the database was last updated.\n\
 \n\
 Update the database to reflect foo's recent changes:\n\
-   fstate -d files.db foo" << std::endl;
+    attic -d files.db foo" << std::endl;
     return 1;
   }
 
-  if (verboseOutput)
-    std::cout << "Reading files ..." << std::endl;
+  for (std::vector<Location *>::iterator i = pool.Locations.begin();
+       i != pool.Locations.end();
+       i++)
+    (*i)->CopyOptions(optionTemplate);
+  
+#if 0
+  bool createdDatabase = false;
 
-  FileState * referent = NULL;
-  FileState * state;
+  StateMap * referent = NULL;
+  StateMap * state;
   if (realArgs.empty()) {
     state = comparator->Referent(verboseOutput);
   } else {
     if (bidirectional && comparator != NULL && ! referenceDir.empty())
       referent = comparator->Referent(verboseOutput);
 
-    state = FileState::ReadState(realArgs, ignoreList, verboseOutput);
+    state = StateMap::ReadState(realArgs, ignoreList, verboseOutput);
     if (DebugMode) {
       std::cout << "read file state:" << std::endl;
       state->Report();
@@ -230,6 +172,7 @@ Update the database to reflect foo's recent changes:\n\
     if (! comparator->Changes.empty()) {
       if (updateRemote) {
 	if (! referenceDir.empty()) {
+#if 0
 	  std::string genDir;
 	  if (updateRemote && ! generations.empty()) {
 	    std::time_t now  = std::time(NULL);
@@ -243,6 +186,7 @@ Update the database to reflect foo's recent changes:\n\
 
 	    comparator->GenerationPath = new FileInfo(genDir);
 	  }
+#endif
 
 	  if (verboseOutput)
 	    std::cout << "Updating files in " << referenceDir << " ..." << std::endl;
@@ -259,7 +203,7 @@ Update the database to reflect foo's recent changes:\n\
 	  if (verboseOutput)
 	    std::cout << "Verifying database ..." << std::endl;
 
-	  state = FileState::CreateDatabase(referenceDir, "", verboseOutput);
+	  state = StateMap::CreateDatabase(referenceDir, "", verboseOutput);
 	  comparator->CompareTo(state);
 	  if (! comparator->Changes.empty()) {
 	    comparator->ReportChanges();
@@ -284,6 +228,7 @@ Update the database to reflect foo's recent changes:\n\
       std::cout << "Writing state to database ./files.db ..." << std::endl;
     state->WriteTo("files.db");
   }
+#endif
 
   }
   catch (std::exception& err) {

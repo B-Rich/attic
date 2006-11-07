@@ -1,14 +1,18 @@
 bin_PROGRAMS = attic
 
 attic_CXXFLAGS =
-attic_SOURCES = attic.cc binary.cc md5.c \
-	Regex.cc FileInfo.cc StateChange.cc FileState.cc StateEntry.cc
+attic_SOURCES = \
+	attic.cc binary.cc md5.c \
+	DateTime.cc FileInfo.cc Regex.cc \
+	StateMap.cc StateEntry.cc StateChange.cc \
+	DataPool.cc
+
 if DEBUG
 attic_CXXFLAGS += -DDEBUG_LEVEL=4
 endif
 attic_LDFLAGS = -static	# for the sake of command-line speed
 
-#info_TEXINFOS = ledger.texi
+#info_TEXINFOS = attic.texi
 
 ######################################################################
 

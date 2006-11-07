@@ -1,0 +1,27 @@
+Overall Design
+==============
+
+Attic is written to be a multi-threaded application in two respects:
+1) the main flow of logic is organized as a concurrent pipeline, and
+2) multiple file transfers are made to each target if possible, by
+allocating jobs from a pool of worker threads.
+
+The first case is done so that transfers can begin as soon as
+possible, even before all of the files within a file set have been
+determined.  The second case is fairly common among file
+synchronization programs, and is simply a way to better saturate an
+ample network connection between two machines.
+
+The pipeline is constructed as follows:
+
+Stage 1: Information gathering
+------------------------------
+
+Stage 2: State reconciliation
+-----------------------------
+
+Stage 3: Execution of changes
+-----------------------------
+
+Stage 4: Validation and reporting
+---------------------------------

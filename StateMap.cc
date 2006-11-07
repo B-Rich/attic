@@ -1,11 +1,11 @@
-#include "FileState.h"
+#include "StateMap.h"
 
 #include <fstream>
 #include <iostream>
 
 namespace Attic {
 
-void FileState::RegisterUpdate(StateEntry * baseEntryToUpdate,
+void StateMap::RegisterUpdate(StateEntry * baseEntryToUpdate,
 			       StateEntry * entryToUpdate,
 			       StateEntry * entryToUpdateFrom,
 			       const std::string& reason)
@@ -14,11 +14,11 @@ void FileState::RegisterUpdate(StateEntry * baseEntryToUpdate,
 				     entryToUpdateFrom, reason));
 
   if (baseEntryToUpdate != entryToUpdate)
-    baseEntryToUpdate->FileStateObj->Changes.push_back
+    baseEntryToUpdate->StateMapObj->Changes.push_back
       (new ObjectUpdate(true, baseEntryToUpdate, entryToUpdateFrom, reason));
 }
 
-void FileState::RegisterUpdateProps(StateEntry * baseEntryToUpdate,
+void StateMap::RegisterUpdateProps(StateEntry * baseEntryToUpdate,
 				    StateEntry * entryToUpdate,
 				    StateEntry * entryToUpdateFrom,
 				    const std::string& reason)
@@ -30,11 +30,11 @@ void FileState::RegisterUpdateProps(StateEntry * baseEntryToUpdate,
 					  entryToUpdateFrom, reason));
 
   if (baseEntryToUpdate != entryToUpdate)
-    baseEntryToUpdate->FileStateObj->Changes.push_back
+    baseEntryToUpdate->StateMapObj->Changes.push_back
       (new ObjectUpdateProps(true, baseEntryToUpdate, entryToUpdateFrom, reason));
 }
 
-void FileState::RegisterDelete(StateEntry * baseEntry, StateEntry * entry)
+void StateMap::RegisterDelete(StateEntry * baseEntry, StateEntry * entry)
 {
   if (entry->Info.IsDirectory())
     for (StateEntry::children_map::const_iterator i = entry->Children.begin();
@@ -48,10 +48,10 @@ void FileState::RegisterDelete(StateEntry * baseEntry, StateEntry * entry)
 
   Changes.push_back(new ObjectDelete(false, entry));
   if (baseEntry && baseEntry != entry)
-    baseEntry->FileStateObj->Changes.push_back(new ObjectDelete(true, baseEntry));
+    baseEntry->StateMapObj->Changes.push_back(new ObjectDelete(true, baseEntry));
 }
 
-void FileState::RegisterCopy(StateEntry * entry, StateEntry * baseDirToCopyTo,
+void StateMap::RegisterCopy(StateEntry * entry, StateEntry * baseDirToCopyTo,
 			     StateEntry * dirToCopyTo)
 {
   if (entry->Info.IsDirectory()) {
@@ -67,7 +67,7 @@ void FileState::RegisterCopy(StateEntry * entry, StateEntry * baseDirToCopyTo,
 
 	if (baseDirToCopyTo != dirToCopyTo) {
 	  baseSubDir = baseDirToCopyTo->FindOrCreateChild(entry->Info.Name);
-	  baseDirToCopyTo->FileStateObj->Changes.push_back
+	  baseDirToCopyTo->StateMapObj->Changes.push_back
 	    (new ObjectCreate(true, baseSubDir, entry));
 	}
       }
@@ -76,18 +76,18 @@ void FileState::RegisterCopy(StateEntry * entry, StateEntry * baseDirToCopyTo,
     if (subDir != NULL) {
       Changes.push_back(new ObjectUpdateProps(false, subDir, entry));
       if (baseSubDir != subDir)
-	baseSubDir->FileStateObj->Changes.push_back
+	baseSubDir->StateMapObj->Changes.push_back
 	  (new ObjectUpdateProps(true, baseSubDir, entry));
     }
   } else {
     Changes.push_back(new ObjectCopy(false, entry, dirToCopyTo));
     if (baseDirToCopyTo != dirToCopyTo)
-      baseDirToCopyTo->FileStateObj->Changes.push_back
+      baseDirToCopyTo->StateMapObj->Changes.push_back
 	(new ObjectCopy(true, entry, baseDirToCopyTo));
   }
 }
 
-StateEntry * FileState::FindDuplicate(StateEntry * child)
+StateEntry * StateMap::FindDuplicate(StateEntry * child)
 {
   StateEntry * foundEntry = NULL;
 
@@ -100,16 +100,16 @@ StateEntry * FileState::FindDuplicate(StateEntry * child)
   return foundEntry;
 }
 
-FileState * FileState::ReadState(const std::list<std::string>& paths,
-				 const std::list<Regex *>& IgnoreList,
+StateMap * StateMap::ReadState(const std::deque<std::string>& paths,
+				 const std::deque<Regex *>& IgnoreList,
 				 bool verboseOutput)
 {
-  FileState * state = new FileState();
+  StateMap * state = new StateMap();
 
   FileInfo info;
   state->Root = new StateEntry(state, NULL, info);
 
-  for (std::list<std::string>::const_iterator i = paths.begin();
+  for (std::deque<std::string>::const_iterator i = paths.begin();
        i != paths.end();
        i++)
     state->ReadEntry(state->Root, *i, Path::GetFileName(*i), IgnoreList,
@@ -118,11 +118,11 @@ FileState * FileState::ReadState(const std::list<std::string>& paths,
   return state;
 }
   
-FileState * FileState::ReadState(const std::string& path,
-				 const std::list<Regex *>& IgnoreList,
+StateMap * StateMap::ReadState(const std::string& path,
+				 const std::deque<Regex *>& IgnoreList,
 				 bool verboseOutput)
 {
-  FileState * state = new FileState();
+  StateMap * state = new StateMap();
 
   FileInfo info(path);
   char * data = new char[info.Length() + 1];
@@ -146,8 +146,9 @@ FileState * FileState::ReadState(const std::string& path,
   return state;
 }
 
-void FileState::BackupEntry(StateEntry * entry)
+void StateMap::BackupEntry(StateEntry * entry)
 {
+#if 0
   if (GenerationPath == NULL)
     return;
 
@@ -155,9 +156,10 @@ void FileState::BackupEntry(StateEntry * entry)
 				entry->Info.RelativeName));
   target.CreateDirectory();
   entry->Copy(target.FullName);
+#endif
 }
 
-void FileState::MergeChanges(FileState * other)
+void StateMap::MergeChanges(StateMap * other)
 {
   // Look for any conflicting changes between this object's change
   // set and other's change set.
@@ -168,7 +170,7 @@ void FileState::MergeChanges(FileState * other)
     Changes.push_back(*i);
 }
 
-void FileState::PerformChanges()
+void StateMap::PerformChanges()
 {
   std::stable_sort(Changes.begin(), Changes.end(), StateChangeComparer());
 
@@ -207,7 +209,7 @@ void FileState::PerformChanges()
   Changes.clear();
 }
 
-void FileState::ReportChanges()
+void StateMap::ReportChanges()
 {
   std::stable_sort(Changes.begin(), Changes.end(), StateChangeComparer());
 
@@ -217,7 +219,7 @@ void FileState::ReportChanges()
     (*i)->Report();
 }
 
-void FileState::WriteTo(const std::string& path)
+void StateMap::WriteTo(const std::string& path)
 {
   FileInfo info(path);
 
@@ -229,13 +231,13 @@ void FileState::WriteTo(const std::string& path)
   Root->WriteTo(fout, true);
 }
 
-StateEntry * FileState::ReadEntry(StateEntry *		    parent,
+StateEntry * StateMap::ReadEntry(StateEntry *		    parent,
 				  const std::string&	    path,
 				  const std::string&	    relativePath,
-				  const std::list<Regex *>& IgnoreList,
+				  const std::deque<Regex *>& IgnoreList,
 				  bool			    verboseOutput)
 {
-  for (std::list<Regex *>::const_iterator i = IgnoreList.begin();
+  for (std::deque<Regex *>::const_iterator i = IgnoreList.begin();
        i != IgnoreList.end();
        i++)
     if ((*i)->IsMatch(path))
@@ -250,19 +252,19 @@ StateEntry * FileState::ReadEntry(StateEntry *		    parent,
   return entry;
 }
 
-void FileState::ReadDirectory(StateEntry *		entry,
+void StateMap::ReadDirectory(StateEntry *		entry,
 			      const std::string&	path,
 			      const std::string&	relativePath,
-			      const std::list<Regex *>& IgnoreList,
+			      const std::deque<Regex *>& IgnoreList,
 			      bool			verboseOutput)
 {
   if (verboseOutput && Path::Parts(relativePath) < 4)
     std::cout << "Scanning: " << entry->Info.FullName << std::endl;
 
   try {
-    std::list<FileInfo> infos;
+    std::deque<FileInfo> infos;
     entry->Info.GetFileInfos(infos);
-    for (std::list<FileInfo>::iterator i = infos.begin();
+    for (std::deque<FileInfo>::iterator i = infos.begin();
 	 i != infos.end();
 	 i++)
       ReadEntry(entry, (*i).FullName, (*i).RelativeName,
@@ -273,15 +275,15 @@ void FileState::ReadDirectory(StateEntry *		entry,
   }
 }
 
-FileState * FileState::CreateDatabase(const std::string& path,
+StateMap * StateMap::CreateDatabase(const std::string& path,
 				      const std::string& dbfile,
 				      bool verbose)
 {
-  std::list<Regex *> ignoreList;
-  std::list<std::string> collection;
+  std::deque<Regex *> ignoreList;
+  std::deque<std::string> collection;
   collection.push_back(path);
 
-  FileState * tree = FileState::ReadState(collection, ignoreList, verbose);
+  StateMap * tree = StateMap::ReadState(collection, ignoreList, verbose);
   if (! dbfile.empty())
     tree->WriteTo(dbfile);
 
@@ -292,18 +294,18 @@ FileState * FileState::CreateDatabase(const std::string& path,
   return tree;
 }
 
-FileState * FileState::Referent(bool verbose)
+StateMap * StateMap::Referent(bool verbose)
 {
-  std::list<std::string> collection;
+  std::deque<std::string> collection;
 
   for (StateEntry::children_map::iterator i = Root->Children.begin();
        i != Root->Children.end();
        i++)
     collection.push_back((*i).second->Info.FullName);
 
-  std::list<Regex *> ignoreList;
+  std::deque<Regex *> ignoreList;
 
-  FileState * tree = FileState::ReadState(collection, ignoreList, verbose);
+  StateMap * tree = StateMap::ReadState(collection, ignoreList, verbose);
   if (DebugMode) {
     std::cout << "read database referent:";
     tree->Report();
