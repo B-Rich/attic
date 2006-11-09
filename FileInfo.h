@@ -1,6 +1,7 @@
 #ifndef _FILEINFO_H
 #define _FILEINFO_H
 
+#include "DateTime.h"
 #include "StateChange.h"
 
 #include <string>

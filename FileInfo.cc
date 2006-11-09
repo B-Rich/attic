@@ -501,7 +501,16 @@ void FileInfo::DumpTo(std::ostream& out, int depth)
     break;
   }
 
-  out << FullName << std::endl;
+  out << FullName;
+
+  if (IsRegularFile())
+    out << " len " << Length();
+
+  if (FileKind() != Collection &&
+      FileKind() != Nonexistant)
+    out << " mod " << DateTime(LastWriteTime().tv_sec);
+
+  out << std::endl;
 
   if (Children)
     for (ChildrenMap::iterator i = Children->begin();
