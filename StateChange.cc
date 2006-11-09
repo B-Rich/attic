@@ -19,7 +19,7 @@ void StateChange::Report(std::ostream& out) const
     out << "M ";
     break;
   case UpdateProps:
-    out << "m ";
+    out << "p ";
     break;
   default:
     assert(0);
@@ -30,7 +30,18 @@ void StateChange::Report(std::ostream& out) const
       << std::endl;
 }
 
-void StateChange::Execute(std::ostream& out, Location * targetLocation)
+std::deque<FileInfo *> *
+StateChange::ExistsAtLocation(StateMap * stateMap,
+			      Location * targetLocation) const
+{
+  if (targetLocation->CurrentState)
+    stateMap = targetLocation->CurrentState;
+
+  return stateMap->FindDuplicate(Item);
+}
+
+void StateChange::Execute(std::ostream& out, Location * targetLocation,
+			  const StateChangesMap * changesMap)
 {
   Path targetPath(Path::Combine(targetLocation->CurrentPath, Item->FullName));
 
@@ -46,7 +57,7 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation)
 	out << "D " << targetPath << std::endl;
       }
       Directory::CreateDirectory(targetPath);
-      out << "C ";
+      out << "c ";
     }
     else if (Item->IsRegularFile()) {
       if (targetInfo.Exists()) {
@@ -64,6 +75,50 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation)
 	targetInfo.Delete();
 	out << "D " << targetPath << std::endl;
       }
+
+      // If Duplicate is non-NULL (and this applies only for Add
+      // changes), then an exact copy of our entry already exists in
+      // the target location.  If it is marked for deletion, we'll
+      // move it to the target path; if it's not, we'll copy it over
+      // there.
+      if (Duplicates) {
+	FileInfo * Duplicate = Duplicates->front();
+
+	bool markedForDeletion = false;
+	if (changesMap)
+	  for (std::deque<FileInfo *>::const_iterator i = Duplicates->begin();
+	       i != Duplicates->end();
+	       i++) {
+	    StateChangesMap::const_iterator j = changesMap->find((*i)->FullName);
+	    if (j != changesMap->end()) {
+	      for (StateChange * ptr = (*j).second; ptr; ptr = ptr->Next)
+		if (ptr->ChangeKind == Remove) {
+		  markedForDeletion = true;
+		  Duplicate = ptr->Item;
+		  break;
+		}
+	    }
+	    if (markedForDeletion)
+	      break;
+	  }
+
+	if (markedForDeletion) {
+	  Directory::CreateDirectory(targetPath.DirectoryName());
+	  File::Move(targetLocation->CurrentPath + Duplicate->FullName,
+		     targetPath);
+	  out << "m ";
+	  break;
+	} else {
+	  // jww (2006-11-09): Do this through the broker, since it
+	  // must happen remotely
+	  Directory::CreateDirectory(targetPath.DirectoryName());
+	  File::Copy(targetLocation->CurrentPath + Duplicate->FullName,
+		     targetPath);
+	  out << "u ";
+	  break;
+	}
+      }
+
       File::Copy(Item->Pathname, targetPath);
       out << "U ";
     }
@@ -74,7 +129,7 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation)
 
   case Remove:
     if (targetInfo.Exists()) {
-      if (Item->IsDirectory())
+      if (targetInfo.IsDirectory())
 	Directory::Delete(targetPath);
       else
 	File::Delete(targetPath);
@@ -176,6 +231,29 @@ void PostChange(StateChangesMap& changesMap, StateChange::Kind kind,
     newChange->Next = (*i).second;
     (*i).second = newChange;
   }
+}
+
+bool StateChangeComparer::operator()(const StateChange * left,
+				     const StateChange * right) const
+{
+  if (left->ChangeKind == StateChange::Remove &&
+      ! right->ChangeKind == StateChange::Remove)
+    return true;
+  if (! left->ChangeKind == StateChange::Remove &&
+      right->ChangeKind == StateChange::Remove)
+    return false;
+
+  if (left->ChangeKind == StateChange::UpdateProps &&
+      ! right->ChangeKind == StateChange::UpdateProps)
+    return false;
+  if (! left->ChangeKind == StateChange::UpdateProps
+      && right->ChangeKind == StateChange::UpdateProps)
+    return true;
+
+  if (left->ChangeKind == StateChange::Remove)
+    return right->Item->FullName < left->Item->FullName;
+  else
+    return left->Item->FullName < right->Item->FullName;
 }
 
 } // namespace Attic

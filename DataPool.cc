@@ -28,34 +28,76 @@ void DataPool::ComputeChanges()
       (*i)->ComputeChanges(CommonAncestor, *AllChanges);
 }
 
+void DataPool::ResolveConflicts()
+{
+  for (StateChangesMap::iterator j = AllChanges->begin();
+       j != AllChanges->end();
+       j++)
+    if ((*j).second->Next)
+      std::cout << "There are conflicts!" << std::endl;
+}
+
 void DataPool::ApplyChanges(std::ostream& out)
 {
   if (! AllChanges)
     return;
 
+  StateChangesArray changesArray;
+
+  for (StateChangesMap::iterator i = AllChanges->begin();
+       i != AllChanges->end();
+       i++)
+    changesArray.push_back((*i).second);
+
+  std::stable_sort(changesArray.begin(), changesArray.end(),
+		   StateChangeComparer());
+
   for (std::vector<Location *>::iterator i = Locations.begin();
        i != Locations.end();
-       i++)
-    for (StateChangesMap::iterator j = AllChanges->begin();
-	 j != AllChanges->end();
-	 j++)
-      if (*i != (*j).second->Item->Repository) {
-	if ((*i)->LoggingOnly) {
-	  (*j).second->Report(out);
-	} else {
-	  (*j).second->Execute(out, *i);
+       i++) {
+    StateChangesArray thisChangesArray;
+
+    for (StateChangesArray::iterator j = changesArray.begin();
+	 j != changesArray.end();
+	 j++) {
+      // Ignore changes in the origin's own repository (since the
+      // change is already extant there).
+      if (*i == (*j)->Item->Repository)
+	continue;
+
+      if ((*j)->ChangeKind == StateChange::Add) {
+	(*j)->Duplicates = (*j)->ExistsAtLocation(CommonAncestor, *i);
+	if ((*j)->Duplicates) {
+	  thisChangesArray.push_front(*j);
+	  continue;
 	}
       }
+      thisChangesArray.push_back(*j);
+    }
+	
+    for (StateChangesArray::iterator j = thisChangesArray.begin();
+	 j != thisChangesArray.end();
+	 j++)
+      for (StateChange * ptr = *j; ptr; ptr = ptr->Next)
+	if (LoggingOnly) {
+	  ptr->Report(out);
+	} else {
+	  StateChangesMap * changesMap = (*i)->CurrentChanges;
+	  if (! changesMap && ! (*i)->PreserveChanges)
+	    changesMap = AllChanges;
+	  ptr->Execute(out, *i, changesMap);
+	}
+  }
 
   // Reflect all of the changes in the ancestor map
-  if (CommonAncestor) {
+  if (! LoggingOnly && CommonAncestor) {
     if (! CommonAncestor->Root)
       CommonAncestor->Root = new FileInfo;
 
-    for (StateChangesMap::iterator j = AllChanges->begin();
-	 j != AllChanges->end();
+    for (StateChangesArray::iterator j = changesArray.begin();
+	 j != changesArray.end();
 	 j++)
-      (*j).second->Execute(CommonAncestor);
+      (*j)->Execute(CommonAncestor);
 
     std::ofstream fout(CommonAncestorPath.c_str());
     CommonAncestor->SaveTo(fout);

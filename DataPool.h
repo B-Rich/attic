@@ -26,7 +26,10 @@ public:
   StateMap *	    CommonAncestor;
   StateChangesMap * AllChanges;
 
-  DataPool() : CommonAncestor(NULL), AllChanges(NULL) {}
+  bool LoggingOnly;
+
+  DataPool()
+    : CommonAncestor(NULL), AllChanges(NULL), LoggingOnly(false) {}
   ~DataPool();
 
   void Initialize() {
@@ -48,6 +51,7 @@ public:
   }
 
   void ComputeChanges();
+  void ResolveConflicts();
   void ApplyChanges(std::ostream& out);
 };
 

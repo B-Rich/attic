@@ -6,6 +6,7 @@
 #include "StateChange.h"
 
 #include <map>
+#include <deque>
 
 namespace Attic {
 
@@ -15,8 +16,8 @@ class StateMap
 public:
   FileInfo * Root;
 
-  typedef std::map<md5sum_t, FileInfo *>  ChecksumMap;
-  typedef std::pair<md5sum_t, FileInfo *> ChecksumPair;
+  typedef std::map<md5sum_t, std::deque<FileInfo *> >  ChecksumMap;
+  typedef std::pair<md5sum_t, std::deque<FileInfo *> > ChecksumPair;
 
   ChecksumMap EntriesByChecksum;
 
@@ -35,7 +36,7 @@ public:
     Root->AddChild(info);
   }
 
-  FileInfo * FindDuplicate(FileInfo * item);
+  std::deque<FileInfo *> * FindDuplicate(FileInfo * item);
 
   void CompareTo(const StateMap * ancestor, StateChangesMap& changesMap) const;
 };

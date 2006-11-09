@@ -93,6 +93,8 @@ md5sum_t md5sum_t::checksum(const Path& path, md5sum_t& csum)
   char cbuf[8192];
 
   std::fstream fin(path.c_str());
+  assert(fin.good());
+
   fin.read(cbuf, 8192);
   int read = fin.gcount();
   while (read > 0) {
@@ -102,6 +104,7 @@ md5sum_t md5sum_t::checksum(const Path& path, md5sum_t& csum)
     fin.read(cbuf, 8192);
     read = fin.gcount();
   }
+  fin.close();
 
   md5_finish(&state, csum.digest);
 }
@@ -116,13 +119,22 @@ std::ostream& operator<<(std::ostream& out, const md5sum_t& md5) {
 
 void File::Copy(const Path& path, const Path& dest)
 {
+  assert(File::Exists(path));
+  assert(! File::Exists(dest));
+
   std::ifstream fin(path.c_str());
   std::ofstream fout(dest.c_str());
+
   do {
     char buf[8192];
     fin.read(buf, 8192);
     fout.write(buf, fin.gcount());
   } while (! fin.eof() && fin.good() && fout.good());
+
+  fin.close();
+  fout.close();
+
+  assert(File::Exists(dest));
 }
 
 FileInfo::FileInfo(Location * _Repository)
@@ -342,14 +354,16 @@ void FileInfo::CopyDetails(FileInfo& dest, bool dataOnly)
 {
   dest.flags |= FILEINFO_DIDSTAT;
 
-  dest.fileKind	    = FileKind();
+  dest.fileKind = FileKind();
   dest.info.st_mode = info.st_mode;
 
   dest.Length() = Length();
 
   if (IsRegularFile() &&
-      (dataOnly || flags & FILEINFO_READCSUM))
-    csum = Checksum();
+      (dataOnly || flags & FILEINFO_READCSUM)) {
+    dest.csum  = Checksum();
+    dest.flags |= FILEINFO_READCSUM;
+  }
 }
 
 void FileInfo::CopyAttributes(FileInfo& dest, bool dataOnly)
@@ -377,7 +391,7 @@ void FileInfo::CopyAttributes(const Path& dest)
 
 md5sum_t& FileInfo::Checksum()
 {
-  if (! IsRegularFile())
+  if (! IsRegularFile() || ! Exists())
     throw Exception("Attempt to calc checksum of non-file '" + Pathname + "'");
 
   if (! (flags & FILEINFO_READCSUM)) {
@@ -510,6 +524,9 @@ void FileInfo::DumpTo(std::ostream& out, int depth)
       FileKind() != Nonexistant)
     out << " mod " << DateTime(LastWriteTime().tv_sec);
 
+  if (IsRegularFile())
+    out << " csum " << Checksum();
+
   out << std::endl;
 
   if (Children)
@@ -566,19 +583,21 @@ void FileInfo::PostAddChange(StateChangesMap& changesMap)
   }
 }
 
-void FileInfo::PostRemoveChange(FileInfo * ancestor,
+void FileInfo::PostRemoveChange(const std::string& childName,
+				FileInfo * ancestorChild,
 				StateChangesMap& changesMap)
 {
-  if (IsDirectory())
-    for (FileInfo::ChildrenMap::const_iterator i = ChildrenBegin();
-	 i != ChildrenEnd();
-	 i++) {
-      FileInfo * ancestorChild = ancestor->FindChild((*i).first);
-      if (ancestorChild)
-	(*i).second->PostRemoveChange(ancestorChild, changesMap);
-    }
+  FileInfo * missingChild =
+    new FileInfo(FullName + childName, this, Repository);
 
-  PostChange(changesMap, StateChange::Remove, this, ancestor);
+  if (ancestorChild->IsDirectory() && ancestorChild->Children)
+    for (FileInfo::ChildrenMap::const_iterator
+	   i = ancestorChild->ChildrenBegin();
+	 i != ancestorChild->ChildrenEnd();
+	 i++)
+      missingChild->PostRemoveChange((*i).first, (*i).second, changesMap);
+
+  PostChange(changesMap, StateChange::Remove, missingChild, ancestorChild);
 }
 
 void FileInfo::PostUpdateChange(FileInfo * ancestor,
@@ -669,17 +688,13 @@ void FileInfo::CompareTo(FileInfo * ancestor, StateChangesMap& changesMap)
       (*i).second->flags &= ~FILEINFO_HANDLED;
     }
     else if (FindChild((*i).first) == NULL) {
-      FileInfo * missingChild = new FileInfo(FullName + (*i).first, this,
-					     Repository);
-      missingChild->PostRemoveChange((*i).second, changesMap);
+      PostRemoveChange((*i).first, (*i).second, changesMap);
       updateProps = true;
     }
   }
 
-#if 0
   if (updateProps && ! updateRegistered)
     PostUpdatePropsChange(ancestor, changesMap);
-#endif
 }
 
 } // namespace Attic

@@ -94,6 +94,10 @@ inline Path operator+(const Path& left, const Path& right) {
   return Path::Combine(left, right);
 }
 
+inline bool operator<(const Path& left, const Path& right) {
+  return left.Name < right.Name;
+}
+
 inline std::ostream& operator<<(std::ostream& out, const Path& path) {
   out << path.Name;
   return out;
@@ -206,6 +210,9 @@ public:
   bool IsDirectory() const {
     return FileKind() == Directory;
   }
+  bool IsCollection() const {
+    return FileKind() == Collection;
+  }
   bool IsSymbolicLink() const {
     return FileKind() == SymbolicLink;
   }
@@ -266,7 +273,8 @@ public:
   void WriteTo(std::ostream& out);
 
   void PostAddChange(StateChangesMap& changesMap);
-  void PostRemoveChange(FileInfo * ancestor, StateChangesMap& changesMap);
+  void PostRemoveChange(const std::string& childName,
+			FileInfo * ancestorChild, StateChangesMap& changesMap);
   void PostUpdateChange(FileInfo * ancestor, StateChangesMap& changesMap);
   void PostUpdatePropsChange(FileInfo * ancestor, StateChangesMap& changesMap);
 
@@ -283,23 +291,23 @@ public:
 
   static void Delete(const Path& path) {
     if (unlink(path.c_str()) == -1)
-      throw Exception("Failed to delete '" + path + "'");
+      throw Exception("Failed to delete '" + path.Name + "'");
   }
 
   static void Copy(const Path& path, const Path& dest);
   static void Move(const Path& path, const Path& dest)
   {
     if (rename(path.c_str(), dest.c_str()) == -1)
-      throw Exception("Failed to move '" + path + "' to '" + dest + "'");
+      throw Exception("Failed to move '" + path.Name + "' to '" + dest.Name + "'");
   }
 
   static void SetOwnership(const Path& path,
 			   mode_t mode, uid_t uid, gid_t gid)
   {
     if (chmod(path.c_str(), mode) == -1)
-      throw Exception("Failed to change permissions of '" + path + "'");
+      throw Exception("Failed to change permissions of '" + path.Name + "'");
     if (chown(path.c_str(), uid, gid) == -1)
-      throw Exception("Failed to change ownership of '" + path + "'");
+      throw Exception("Failed to change ownership of '" + path.Name + "'");
   }
 
   static void SetAccessTimes(const Path& path,
@@ -311,7 +319,7 @@ public:
     TIMESPEC_TO_TIMEVAL(&temp[1], &LastWriteTime);
 
     if (utimes(path.c_str(), temp) == -1)
-      throw Exception("Failed to set last write time of '" + path + "'");
+      throw Exception("Failed to set last write time of '" + path.Name + "'");
   }
 };
 
@@ -321,7 +329,7 @@ class Directory : public File
   {
     if (! info.Exists())
       if (mkdir(info.Pathname.c_str(), 0755) == -1)
-	throw Exception("Failed to create directory '" + info.Pathname + "'");
+	throw Exception("Failed to create directory '" + info.Pathname.Name + "'");
   }
 
 public:
@@ -340,7 +348,7 @@ public:
   static void Delete(const Path& path)
   {
     if (rmdir(path.c_str()) == -1)
-      throw Exception("Failed to remove directory '" + path + "'");
+      throw Exception("Failed to remove directory '" + path.Name + "'");
   }
 
   static void Copy(const Path& path, const Path& dest)

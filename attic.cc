@@ -65,7 +65,7 @@ int main(int argc, char *args[])
       break;
 
     case 'n':
-      optionTemplate.LoggingOnly = true;
+      pool.LoggingOnly = true;
       break;
 
     case 'c':

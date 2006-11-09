@@ -3,8 +3,14 @@
 
 #include <string>
 #include <map>
+#include <deque>
 
 namespace Attic {
+
+class StateChange;
+
+typedef std::map<std::string, StateChange *>  StateChangesMap;
+typedef std::pair<std::string, StateChange *> StateChangesPair;
 
 class FileInfo;
 class Location;
@@ -14,65 +20,41 @@ class StateChange
 {
 public:
   enum Kind {
-    Nothing,
-    Add,			// in this case, Ancestor is the parent dir
-    Remove,
-    Update,
-    UpdateProps
+    Nothing, Add, Remove, Update, UpdateProps
   };
 
   StateChange * Next;
   Kind		ChangeKind;
   FileInfo *	Item;
-  FileInfo *	Ancestor;
+
+  union {
+    FileInfo * Ancestor;
+    std::deque<FileInfo *> * Duplicates;
+  };
 
   StateChange(Kind _ChangeKind, FileInfo * _Item, FileInfo * _Ancestor)
     : Next(NULL), ChangeKind(_ChangeKind),
       Item(_Item), Ancestor(_Ancestor) {}
 
   void Report(std::ostream& out) const;
-  void Execute(std::ostream& out, Location * targetLocation);
+  void Execute(std::ostream& out, Location * targetLocation,
+	       const StateChangesMap * changesMap);
   void Execute(StateMap * stateMap);
   void DebugPrint(std::ostream& out) const;
   int  Depth() const;
-};
 
-typedef std::map<std::string, StateChange *>  StateChangesMap;
-typedef std::pair<std::string, StateChange *> StateChangesPair;
+  std::deque<FileInfo *> *
+  ExistsAtLocation(StateMap * stateMap, Location * targetLocation) const;
+};
 
 void PostChange(StateChangesMap& changesMap, StateChange::Kind kind,
 		FileInfo * entry, FileInfo * ancestor);
 
-struct StateChangeComparer
-{
-  bool operator()(const StateChange * left, const StateChange * right) const
-  {
-    bool leftIsAdd	    = left->ChangeKind == StateChange::Add;
-    bool leftIsUpdateProps  = (! leftIsAdd &&
-			       left->ChangeKind == StateChange::UpdateProps);
-    bool rightIsAdd         = right->ChangeKind == StateChange::Add;
-    bool rightIsUpdateProps = (! rightIsAdd &&
-			       right->ChangeKind == StateChange::UpdateProps);
-
-    if (leftIsAdd && ! rightIsAdd)
-      return true;
-    if (! leftIsAdd && rightIsAdd)
-      return false;
-    if (leftIsUpdateProps && ! rightIsUpdateProps)
-      return false;
-    if (! leftIsUpdateProps && rightIsUpdateProps)
-      return true;
-
-#if 0
-    if (left->DatabaseOnly && ! right->DatabaseOnly)
-      return false;
-    if (! left->DatabaseOnly && right->DatabaseOnly)
-      return true;
-#endif
-
-    return (right->Depth() - left->Depth()) < 0;
-  }
+struct StateChangeComparer {
+  bool operator()(const StateChange * left, const StateChange * right) const;
 };
+
+typedef std::deque<StateChange *> StateChangesArray;
 
 } // namespace Attic
 
