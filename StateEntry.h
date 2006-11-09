@@ -12,17 +12,15 @@ class StateEntry
 {
 public:
   FileInfo     Info;
-  bool	       Handled;
-  bool	       DeletePending;
   int	       Depth;
   static bool  TrustMode;
-  StateMap *  StateMapObj;
+  StateMap *   StateMapObj;
   StateEntry * Parent;
 
-  typedef std::map<std::string, StateEntry *>  children_map;
-  typedef std::pair<std::string, StateEntry *> children_pair;
+  typedef std::map<std::string, StateEntry *>  ChildrenMap;
+  typedef std::pair<std::string, StateEntry *> ChildrenPair;
 
-  children_map Children;
+  ChildrenMap Children;
 
   StateEntry(StateMap *     _StateMapObj,
 	     StateEntry *    _Parent,
@@ -46,13 +44,6 @@ public:
       Parent->AppendChild(this);
   }
 
-  void AppendChild(StateEntry * entry)
-  {
-    std::pair<children_map::iterator, bool> result =
-      Children.insert(children_pair(entry->Info.Name, entry));
-    assert(result.second);
-  }
-
   void WriteTo(std::ostream& w, bool top);
 
   static StateEntry *
@@ -60,16 +51,6 @@ public:
 	      const std::string& parentPath,
 	      const std::string& relativePath,
 	      char *& data);
-
-  StateEntry * CreateChild(const std::string& name);
-  StateEntry * FindChild(const std::string& name);
-  StateEntry * FindOrCreateChild(const std::string& name)
-  {
-    StateEntry * child = FindChild(name);
-    if (child == NULL)
-      child = CreateChild(name);
-    return child;
-  }
 
   void Move(const std::string& target);
   void Copy(const std::string& target);

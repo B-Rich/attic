@@ -1,104 +1,79 @@
 #include "StateMap.h"
+#include "binary.h"
 
 #include <fstream>
 #include <iostream>
 
+#define BINARY_VERSION 0x00000001L
+
 namespace Attic {
 
-void StateMap::RegisterUpdate(StateEntry * baseEntryToUpdate,
-			       StateEntry * entryToUpdate,
-			       StateEntry * entryToUpdateFrom,
-			       const std::string& reason)
+void StateMap::RegisterChecksums(FileInfo * entry)
 {
-  Changes.push_back(new ObjectUpdate(false, entryToUpdate,
-				     entryToUpdateFrom, reason));
-
-  if (baseEntryToUpdate != entryToUpdate)
-    baseEntryToUpdate->StateMapObj->Changes.push_back
-      (new ObjectUpdate(true, baseEntryToUpdate, entryToUpdateFrom, reason));
+  if (entry->IsRegularFile())
+    EntriesByChecksum[entry->Checksum()] = entry;
+  else if (entry->IsDirectory())
+    for (FileInfo::ChildrenMap::const_iterator i = entry->ChildrenBegin();
+	 i != entry->ChildrenEnd();
+	 i++)
+      RegisterChecksums((*i).second);
 }
 
-void StateMap::RegisterUpdateProps(StateEntry * baseEntryToUpdate,
-				    StateEntry * entryToUpdate,
-				    StateEntry * entryToUpdateFrom,
-				    const std::string& reason)
+void StateMap::LoadFrom(const Path& path)
 {
-  if (entryToUpdate == entryToUpdateFrom)
+  FileInfo info(path);
+  if (! info.Exists())
     return;
 
-  Changes.push_back(new ObjectUpdateProps(false, entryToUpdate,
-					  entryToUpdateFrom, reason));
+  char * data = new char[info.Length() + 1];
 
-  if (baseEntryToUpdate != entryToUpdate)
-    baseEntryToUpdate->StateMapObj->Changes.push_back
-      (new ObjectUpdateProps(true, baseEntryToUpdate, entryToUpdateFrom, reason));
-}
-
-void StateMap::RegisterDelete(StateEntry * baseEntry, StateEntry * entry)
-{
-  if (entry->Info.IsDirectory())
-    for (StateEntry::children_map::const_iterator i = entry->Children.begin();
-	 i != entry->Children.end();
-	 i++) {
-      StateEntry * baseChild =
-	(baseEntry != entry ?
-	 baseEntry->FindChild((*i).first) : (*i).second);
-      RegisterDelete(baseChild, (*i).second);
-    }
-
-  Changes.push_back(new ObjectDelete(false, entry));
-  if (baseEntry && baseEntry != entry)
-    baseEntry->StateMapObj->Changes.push_back(new ObjectDelete(true, baseEntry));
-}
-
-void StateMap::RegisterCopy(StateEntry * entry, StateEntry * baseDirToCopyTo,
-			     StateEntry * dirToCopyTo)
-{
-  if (entry->Info.IsDirectory()) {
-    StateEntry * baseSubDir = NULL;
-    StateEntry * subDir     = NULL;
-    for (StateEntry::children_map::const_iterator i = entry->Children.begin();
-	 i != entry->Children.end();
-	 i++) {
-      if (subDir == NULL) {
-	baseSubDir = subDir =
-	  dirToCopyTo->FindOrCreateChild(entry->Info.Name);
-	Changes.push_back(new ObjectCreate(false, subDir, entry));
-
-	if (baseDirToCopyTo != dirToCopyTo) {
-	  baseSubDir = baseDirToCopyTo->FindOrCreateChild(entry->Info.Name);
-	  baseDirToCopyTo->StateMapObj->Changes.push_back
-	    (new ObjectCreate(true, baseSubDir, entry));
-	}
-      }
-      RegisterCopy((*i).second, baseSubDir, subDir);
-    }
-    if (subDir != NULL) {
-      Changes.push_back(new ObjectUpdateProps(false, subDir, entry));
-      if (baseSubDir != subDir)
-	baseSubDir->StateMapObj->Changes.push_back
-	  (new ObjectUpdateProps(true, baseSubDir, entry));
-    }
-  } else {
-    Changes.push_back(new ObjectCopy(false, entry, dirToCopyTo));
-    if (baseDirToCopyTo != dirToCopyTo)
-      baseDirToCopyTo->StateMapObj->Changes.push_back
-	(new ObjectCopy(true, entry, baseDirToCopyTo));
+  std::ifstream fin(path.c_str());
+  fin.read(data, info.Length());
+  if (fin.gcount() != info.Length()) {
+    delete[] data;
+    throw Exception("Failed to read database file '" + path + "'");
   }
+
+  try {
+    char * ptr = data;
+    if (read_binary_long<long>(ptr) == BINARY_VERSION) {
+      Root = FileInfo::ReadFrom(ptr);
+      RegisterChecksums(Root);
+    }
+  }
+  catch (...) {
+    delete[] data;
+    throw;
+  }
+  delete[] data;
 }
 
-StateEntry * StateMap::FindDuplicate(StateEntry * child)
+void StateMap::SaveTo(std::ostream& out)
 {
-  StateEntry * foundEntry = NULL;
+  write_binary_long(out, BINARY_VERSION);
+  if (Root)
+    Root->WriteTo(out);
+}
 
-  if (! StateEntry::TrustMode && child->Info.FileKind() == FileInfo::File) {
-    checksum_map::iterator i = ChecksumDict.find(child->Info.Checksum());
-    if (i != ChecksumDict.end())
+FileInfo * StateMap::FindDuplicate(FileInfo * item)
+{
+  FileInfo * foundEntry = NULL;
+
+  if (item->FileKind() == FileInfo::File) {
+    ChecksumMap::iterator i = EntriesByChecksum.find(item->Checksum());
+    if (i != EntriesByChecksum.end())
       foundEntry = (*i).second;
   }
-
   return foundEntry;
 }
+
+void StateMap::CompareTo(const StateMap * ancestor,
+			 StateChangesMap& changesMap) const
+{
+  Root->CompareTo(ancestor->Root, changesMap);
+}
+
+#if 0
 
 StateMap * StateMap::ReadState(const std::deque<std::string>& paths,
 				 const std::deque<Regex *>& IgnoreList,
@@ -107,7 +82,7 @@ StateMap * StateMap::ReadState(const std::deque<std::string>& paths,
   StateMap * state = new StateMap();
 
   FileInfo info;
-  state->Root = new StateEntry(state, NULL, info);
+  state->Root = new FileInfo(state, NULL, info);
 
   for (std::deque<std::string>::const_iterator i = paths.begin();
        i != paths.end();
@@ -146,7 +121,7 @@ StateMap * StateMap::ReadState(const std::string& path,
   return state;
 }
 
-void StateMap::BackupEntry(StateEntry * entry)
+void StateMap::BackupEntry(FileInfo * entry)
 {
 #if 0
   if (GenerationPath == NULL)
@@ -177,7 +152,7 @@ void StateMap::PerformChanges()
   for (std::vector<StateChange *>::iterator i = Changes.begin();
        i != Changes.end();
        i++) {
-    if (dynamic_cast<ObjectCreate *>(*i) != NULL) {
+    if (dynamic_cast<CreateChange *>(*i) != NULL) {
       if (DebugMode)
 	(*i)->Identify();
       (*i)->Report();
@@ -198,7 +173,7 @@ void StateMap::PerformChanges()
   for (std::vector<StateChange *>::iterator i = Changes.begin();
        i != Changes.end();
        i++) {
-    if (dynamic_cast<ObjectCreate *>(*i) == NULL) {
+    if (dynamic_cast<CreateChange *>(*i) == NULL) {
       if (DebugMode)
 	(*i)->Identify();
       (*i)->Report();
@@ -231,7 +206,7 @@ void StateMap::WriteTo(const std::string& path)
   Root->WriteTo(fout, true);
 }
 
-StateEntry * StateMap::ReadEntry(StateEntry *		    parent,
+FileInfo * StateMap::ReadEntry(FileInfo *		    parent,
 				  const std::string&	    path,
 				  const std::string&	    relativePath,
 				  const std::deque<Regex *>& IgnoreList,
@@ -243,8 +218,8 @@ StateEntry * StateMap::ReadEntry(StateEntry *		    parent,
     if ((*i)->IsMatch(path))
       return NULL;
 
-  StateEntry * entry =
-    new StateEntry(this, parent, FileInfo(path, relativePath));
+  FileInfo * entry =
+    new FileInfo(this, parent, FileInfo(path, relativePath));
 
   if (entry->Info.FileKind() == FileInfo::Directory)
     ReadDirectory(entry, path, relativePath, IgnoreList, verboseOutput);
@@ -252,7 +227,7 @@ StateEntry * StateMap::ReadEntry(StateEntry *		    parent,
   return entry;
 }
 
-void StateMap::ReadDirectory(StateEntry *		entry,
+void StateMap::ReadDirectory(FileInfo *		entry,
 			      const std::string&	path,
 			      const std::string&	relativePath,
 			      const std::deque<Regex *>& IgnoreList,
@@ -294,23 +269,6 @@ StateMap * StateMap::CreateDatabase(const std::string& path,
   return tree;
 }
 
-StateMap * StateMap::Referent(bool verbose)
-{
-  std::deque<std::string> collection;
-
-  for (StateEntry::children_map::iterator i = Root->Children.begin();
-       i != Root->Children.end();
-       i++)
-    collection.push_back((*i).second->Info.FullName);
-
-  std::deque<Regex *> ignoreList;
-
-  StateMap * tree = StateMap::ReadState(collection, ignoreList, verbose);
-  if (DebugMode) {
-    std::cout << "read database referent:";
-    tree->Report();
-  }
-  return tree;
-}
+#endif
 
 } // namespace Attic

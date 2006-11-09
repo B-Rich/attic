@@ -2,12 +2,13 @@
 #define _LOCATION_H
 
 #include "Regex.h"
-#include "FileInfo.h"
-#include "StateChange.h"
+#include "Broker.h"
+#include "Archive.h"
 #include "StateMap.h"
-#include "StateEntry.h"
+#include "StateChange.h"
 
 #include <map>
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -17,12 +18,7 @@ namespace Attic {
 // A Location represents a directory on a mounted volume or a remote
 // host, with an associated state map.
 
-typedef std::map<std::string, StateChange *>  StateChangesMap;
-typedef std::pair<std::string, StateChange *> StateChangesPair;
-
-class Archive;
-class Broker;
-
+class StateMap;
 class Location
 {
 public:
@@ -34,21 +30,42 @@ public:
   // slave mode on the Location's host.
   Broker * SiteBroker;
 
-  // If a location supports bidirectional updating, its CurrentState
-  // will be determined upon connection to detect how it now differs
-  // from the DataPool's CommonAncestor.  If a CurrentState can be
-  // determined, then after the reconciliation phase there will be a
-  // CurrentChanges map reflecting all the changes that would have
-  // happen to the common ancestor tree to make it identical to this
-  // Location.  Thus, if the only change at this location were the
-  // deletion of a file, the CurrentChanges map would point to a
-  // single DeleteChange object representing this change in state.
-  StateMap	  CurrentState;
-  StateChangesMap CurrentChanges;
+  // If a location supports bidirectional updating, it will be
+  // determined upon connection how it now differs from the DataPool's
+  // CommonAncestor.  If these changes can be determined, after the
+  // reconciliation phase there will be a CurrentChanges map
+  // reflecting all the changes that would have happen to the common
+  // ancestor tree to make it identical to this Location.  Thus, if
+  // the only change at this location were the deletion of a file, the
+  // CurrentChanges map would point to a single DeleteChange object
+  // representing this change in state.
+  StateMap *        CurrentState;
+  StateChangesMap * CurrentChanges;
 
-  FileInfo& RootPath() {
-    return CurrentState.Root->Info;
+  FileInfo * Root() {
+    if (! CurrentState)
+      CurrentState = new StateMap(new FileInfo("", NULL, this));
+    return CurrentState->Root;
   }
+  void ComputeChanges(const StateMap * ancestor, StateChangesMap& changesMap);
+  void ApplyChanges(const StateChangesMap& changes);
+
+  std::vector<Regex *> Regexps;
+
+  std::string  Moniker;
+  Path	       RootPath;
+  Path	       VolumePath;
+  Path	       CurrentPath;
+  unsigned int VolumeSize;
+  unsigned int VolumeQuota;
+  unsigned int MaximumSize;
+  unsigned int MaximumPercent;
+  Archive *    ArchivalStore;
+  Path         TempDirectory;
+  std::string  CompressionScheme;
+  std::string  CompressionOptions;
+  std::string  EncryptionScheme;
+  std::string  EncryptionOptions;
 
   // If LowBandwidth is true, signature files will be kept in the
   // state map for the common ancestor so that this data need not be
@@ -56,7 +73,7 @@ public:
   // can get expensive in terms of disk space on the volume that
   // stores the ancestor's state map!
   bool LowBandwidth;		// -L if true, optimize traffic at all costs
-  bool Bidirectional;		// -b if true, location changes are preserved
+  bool PreserveChanges;		// -b if true, location changes are preserved
   bool CaseSensitive;		// -c if true, file system is case sensitive
   bool TrustLengthOnly;		//    if true, only check files based on size
   bool TrustTimestamps;		//    if false, checksum to detect changes (-c)
@@ -82,107 +99,16 @@ public:
   bool RespectBoundaries;	// -x if true, never cross filesystem boundaries
   bool LoggingOnly;		// -n if true, don't transfer, just log operations
   bool VerboseLogging;		// -v if true, make logging much more verbose
-
-  // RCS SCCS CVS  CVS.adm  RCSLOG  cvslog.*  tags  TAGS  .make.state
-  // .nse_depinfo  *~ #* .#* ,* _$* *$ *.old *.bak *.BAK *.orig *.rej
-  // .del-* *.a *.olb *.o *.obj *.so *.exe *.Z *.elc *.ln core .svn/
-  bool ExcludeCVS;
-  std::vector<Regex *> Regexps;
-
-  std::string  VolumePath;
-  unsigned int VolumeSize;
-  unsigned int VolumeQuota;
-  unsigned int MaximumSize;
-  unsigned int MaximumPercent;
-  Archive *    ArchivalStore;
-  std::string  TempDirectory;
-  std::string  CompressionScheme;
-  std::string  CompressionOptions;
-  std::string  EncryptionScheme;
-  std::string  EncryptionOptions;
+  bool ExcludeCVS;		// -C if true, exclude files related to CVS
 
   // Initialize this location using optionTemplate to determine the
   // default values for options.
-  Location(const std::string& path = "")
-    : SiteBroker(NULL),
-      CurrentState(path),
+  Location(const std::string& path = "");
+  Location(const std::string& path, const Location& optionTemplate);
+  ~Location();
 
-      LowBandwidth(false),
-      Bidirectional(false),
-      CaseSensitive(true),
-      TrustLengthOnly(false),
-      TrustTimestamps(true),
-      OverwriteCopy(false),
-      CopyWholeFiles(false),
-      ChecksumVerify(false),
-      VerifyResults(false),
-      SecureDelete(false),
-      DeleteBeforeUpdate(false),
-      PreserveTimestamps(true),
-      PreserveHardLinks(true),
-      PreserveSoftLinks(true),
-      PreserveOwnership(true),
-      PreserveGroup(true),
-      PreservePermissions(true),
-      PreserveSparseFiles(true),
-      EncodeFilenames(false),
-      ExtendedAttributes(true),
-      CompressFiles(false),
-      CompressTraffic(false),
-      EncryptFiles(false),
-      EncryptTraffic(false),
-      RespectBoundaries(false),
-      LoggingOnly(false),
-      VerboseLogging(false),
-
-      ExcludeCVS(false),
-
-      VolumeSize(0),
-      VolumeQuota(0),
-      MaximumSize(0),
-      MaximumPercent(0),
-
-      ArchivalStore(NULL) {}
-
-  void CopyOptions(const Location& optionTemplate)
-  {
-      LowBandwidth	  = optionTemplate.LowBandwidth;
-      Bidirectional	  = optionTemplate.Bidirectional;
-      CaseSensitive	  = optionTemplate.CaseSensitive;
-      TrustLengthOnly	  = optionTemplate.TrustLengthOnly;
-      TrustTimestamps	  = optionTemplate.TrustTimestamps;
-      OverwriteCopy	  = optionTemplate.OverwriteCopy;
-      CopyWholeFiles	  = optionTemplate.CopyWholeFiles;
-      ChecksumVerify	  = optionTemplate.ChecksumVerify;
-      VerifyResults	  = optionTemplate.VerifyResults;
-      SecureDelete	  = optionTemplate.SecureDelete;
-      DeleteBeforeUpdate  = optionTemplate.DeleteBeforeUpdate;
-      PreserveTimestamps  = optionTemplate.PreserveTimestamps;
-      PreserveHardLinks	  = optionTemplate.PreserveHardLinks;
-      PreserveSoftLinks	  = optionTemplate.PreserveSoftLinks;
-      PreserveOwnership	  = optionTemplate.PreserveOwnership;
-      PreserveGroup	  = optionTemplate.PreserveGroup;
-      PreservePermissions = optionTemplate.PreservePermissions;
-      PreserveSparseFiles = optionTemplate.PreserveSparseFiles;
-      EncodeFilenames	  = optionTemplate.EncodeFilenames;
-      ExtendedAttributes  = optionTemplate.ExtendedAttributes;
-      CompressFiles	  = optionTemplate.CompressFiles;
-      CompressTraffic	  = optionTemplate.CompressTraffic;
-      EncryptFiles	  = optionTemplate.EncryptFiles;
-      EncryptTraffic	  = optionTemplate.EncryptTraffic;
-      RespectBoundaries	  = optionTemplate.RespectBoundaries;
-      LoggingOnly	  = optionTemplate.LoggingOnly;
-      VerboseLogging	  = optionTemplate.VerboseLogging;
-      ExcludeCVS	  = optionTemplate.ExcludeCVS;
-
-      Regexps.clear();
-
-      for (std::vector<Regex *>::const_iterator
-	     i = optionTemplate.Regexps.begin();
-	   i != optionTemplate.Regexps.end();
-	   i++)
-	Regexps.push_back(new Regex(**i));
-  }
+  void CopyOptions(const Location& optionTemplate);
+  void Initialize();
 };
 
 } // namespace Attic

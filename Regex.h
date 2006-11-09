@@ -13,7 +13,8 @@ public:
   bool Exclude;
   std::string Pattern;
 
-  explicit Regex(const std::string& pattern);
+  explicit Regex(const std::string& pattern,
+		 bool globStyle = false);
   Regex(const Regex&);
   ~Regex();
 

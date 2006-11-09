@@ -13,14 +13,32 @@ int main(int argc, char *args[])
 
   for (int i = 1; i < argc; i++) {
     if (args[i][0] != '-') {
-      pool.Locations.push_back(new Location(File::ExpandPath(args[i])));
+      pool.Locations.push_back(new Location(Path::ExpandPath(args[i])));
       continue;
     }
 
     switch (args[i][1]) {
     case 'b':
-      optionTemplate.Bidirectional = true;
+      optionTemplate.PreserveChanges = true;
       break;
+
+    case '>': {
+      Path database(Path::ExpandPath(args[++i]));
+      if (! File::Exists(database))
+	return 1;
+
+      std::cout << "Dumping state database '" << database << "':"
+		<< std::endl;
+
+      StateMap stateMap;
+      stateMap.LoadFrom(database);
+      if (stateMap.Root)
+	stateMap.Root->DumpTo(std::cout);
+      else
+	std::cout << "Database has no contents!" << std::endl;
+
+      return 0;
+    }
 
     case 'D':
       DebugMode = true;
@@ -37,13 +55,13 @@ int main(int argc, char *args[])
 #if 0
     case 'G':
       if (i + 1 < argc)
-	generations = File::ExpandPath(args[++i]);
+	generations = Path::ExpandPath(args[++i]);
       break;
 #endif
 
     case 'd':
       if (i + 1 < argc)
-	pool.BindAncestorToFile(File::ExpandPath(args[++i]));
+	pool.LoadAncestorFromFile(Path::ExpandPath(args[++i]));
       break;
 
     case 'n':
@@ -66,7 +84,7 @@ int main(int argc, char *args[])
       if (i + 1 < argc) {
 	FileInfo info(args[i + 1]);
 	if (info.FileKind() == FileInfo::File) {
-	  std::ifstream fin(args[i + 1]);
+	  std::ifstream fin(Path::ExpandPath(args[i + 1]).c_str());
 	  do {
 	    std::string s;
 	    std::getline(fin, s);
@@ -80,10 +98,10 @@ int main(int argc, char *args[])
   }
 
   if (pool.Locations.empty()) {
-    std::cout << "usage: attic <OPTIONS> [-d DATABASE] [DIRECTORY ...]\n\
+    std::cout << "usage: attic <OPTIONS> [DIRECTORY ...]\n\
 \n\
-Where options is one or more of:\n\
-    -d FILE   Specify a database to compare with\n\
+Options accepted:\n\
+    -d FILE   Specify the database containing the common ancestor\n\
     -r DIR    Specify a remote directory to reconcile against\n\
     -u        Update the given remote directory (-r)\n\
     -c        Use checksums instead of just length & timestamps.\n\
@@ -127,6 +145,12 @@ Update the database to reflect foo's recent changes:\n\
        i++)
     (*i)->CopyOptions(optionTemplate);
   
+  pool.Locations.front()->PreserveChanges = true;
+  pool.UseAncestor();
+
+  pool.ComputeChanges();
+  pool.ApplyChanges(std::cout);
+
 #if 0
   bool createdDatabase = false;
 

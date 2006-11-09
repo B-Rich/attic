@@ -1,7 +1,7 @@
 #include "Regex.h"
 #include "error.h"
 
-Regex::Regex(const std::string& pat) : Exclude(false)
+Regex::Regex(const std::string& pat, bool globStyle) : Exclude(false)
 {
   const char * p = pat.c_str();
   if (*p == '-') {
@@ -15,7 +15,49 @@ Regex::Regex(const std::string& pat) : Exclude(false)
     while (std::isspace(*p))
       p++;
   }
-  Pattern = p;
+
+  if (globStyle) {
+    bool hadSlash = false;
+    for (const char * q = p; *q; q++)
+      if (*q == '/') {
+	hadSlash = true;
+	break;
+      }
+
+    if (! hadSlash)
+      Pattern += "^";
+
+    while (*p) {
+      switch (*p) {
+      case '?':
+	Pattern += '.';
+	break;
+
+      case '*':
+	if (*(p + 1) == '*')
+	  Pattern += ".*";
+	else
+	  Pattern += "[^/]*";
+	break;
+
+      case '+':
+      case '.':
+      case '$':
+      case '^':
+	Pattern += '\\';
+	Pattern += *p;
+	break;
+
+      default:
+	Pattern += *p;
+	break;
+      }
+      ++p;
+    }
+    Pattern += "$";
+  } else {
+    Pattern = p;
+  }
 
   const char *error;
   int erroffset;

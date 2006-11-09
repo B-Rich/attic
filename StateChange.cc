@@ -1,185 +1,181 @@
 #include "StateChange.h"
 #include "StateMap.h"
-#include "StateEntry.h"
+#include "Location.h"
 
 #include <iostream>
 
 namespace Attic {
 
-int ObjectCreate::Depth() const
+void StateChange::Report(std::ostream& out) const
 {
-  return dirToCreate->Depth;
+  switch (ChangeKind) {
+  case Add:
+    out << "A ";
+    break;
+  case Remove:
+    out << "R ";
+    break;
+  case Update:
+    out << "M ";
+    break;
+  case UpdateProps:
+    out << "m ";
+    break;
+  default:
+    assert(0);
+    break;
+  }
+
+  out << Path::Combine(Item->Repository->Moniker, Item->FullName)
+      << std::endl;
 }
 
-void ObjectCreate::Identify()
+void StateChange::Execute(std::ostream& out, Location * targetLocation)
 {
-  std::cout << "ObjectCreate(" << DatabaseOnly << ", "
-	    << dirToCreate << " " << dirToCreate->Info.FullName << ", "
-	    << dirToImitate << " " << dirToImitate->Info.FullName << ")"
-	    << std::endl;
+  Path targetPath(Path::Combine(targetLocation->CurrentPath, Item->FullName));
+
+  FileInfo targetInfo(targetPath);
+
+  switch (ChangeKind) {
+  case Add:
+    if (Item->IsDirectory()) {
+      if (targetInfo.Exists()) {
+	if (targetInfo.IsDirectory())
+	  return;
+	targetInfo.Delete();
+	out << "D " << targetPath << std::endl;
+      }
+      Directory::CreateDirectory(targetPath);
+      out << "C ";
+    }
+    else if (Item->IsRegularFile()) {
+      if (targetInfo.Exists()) {
+	if (targetInfo.IsRegularFile() &&
+	    targetInfo.Checksum() == Item->Checksum()) {
+	  StateChangesMap changes;
+	  Item->CompareTo(&targetInfo, changes);
+	  if (! changes.empty()) {
+	    Item->CopyAttributes(targetPath);
+	    out << "p ";
+	    break;
+	  }
+	  return;
+	}
+	targetInfo.Delete();
+	out << "D " << targetPath << std::endl;
+      }
+      File::Copy(Item->Pathname, targetPath);
+      out << "U ";
+    }
+    else {
+      assert(0);
+    }
+    break;
+
+  case Remove:
+    if (targetInfo.Exists()) {
+      if (Item->IsDirectory())
+	Directory::Delete(targetPath);
+      else
+	File::Delete(targetPath);
+    }
+    out << "D ";
+    break;
+
+  case Update:
+    if (Item->IsRegularFile())
+      File::Copy(Item->Pathname, targetPath);
+    else
+      assert(0);
+    out << "P ";
+    break;
+
+  case UpdateProps:
+    Item->CopyAttributes(targetPath);
+    out << "p ";
+    break;
+
+  default:
+    assert(0);
+    break;
+  }
+
+  out << Path::Combine(targetLocation->Moniker, Item->FullName)
+      << std::endl;
 }
 
-void ObjectCreate::Perform()
+void StateChange::Execute(StateMap * stateMap)
 {
-  if (DatabaseOnly) return;
-  Directory::CreateDirectory(dirToCreate->Info.FullName);
-  dirToImitate->Info.CopyAttributes(dirToCreate->Info);
-}
+  FileInfo * entry;
 
-void ObjectCreate::Report()
-{
-  if (DatabaseOnly) return;
-  std::cout << dirToCreate->Info.FullName << ": created" << std::endl;
-}
+  switch (ChangeKind) {
+  case Add:
+    entry = stateMap->Root->FindOrCreateMember(Item->FullName);
+    Item->CopyDetails(*entry, true);
+    Item->CopyAttributes(*entry, true);
+    break;
 
-int ObjectCopy::Depth() const
-{
-  return dirToCopyTo->Depth + 1;
-}
+  case Remove:
+    entry = stateMap->Root->FindMember(Item->FullName);
+    if (entry)
+      entry->Parent->DestroyChild(entry);
+    break;
 
-void ObjectCopy::Identify()
-{
-  std::cout << "ObjectCopy(" << DatabaseOnly << ", "
-	    << entryToCopyFrom << " " << entryToCopyFrom->Info.FullName << ", "
-	    << dirToCopyTo << " " << dirToCopyTo->Info.FullName << ")"
-	    << std::endl;
-}
+  case Update:
+    entry = stateMap->Root->FindMember(Item->FullName);
+    if (entry)
+      Item->CopyDetails(*entry, true);
+    break;
 
-void ObjectCopy::Prepare()
-{
-  if (DatabaseOnly) return;
-  if (entryToCopyFrom->Copy(dirToCopyTo, true)) {
-    copyDone = true;
-    std::cout << Path::Combine(dirToCopyTo->Info.FullName,
-			       entryToCopyFrom->Info.Name)
-	      << ": copied (by moving)" << std::endl;
+  case UpdateProps:
+    entry = stateMap->Root->FindMember(Item->FullName);
+    if (entry)
+      Item->CopyAttributes(*entry, true);
+    break;
+
+  default:
+    assert(0);
+    break;
   }
 }
 
-void ObjectCopy::Perform()
+void StateChange::DebugPrint(std::ostream& out) const
 {
-  if (copyDone) return;
-  if (DatabaseOnly) {
-    dirToCopyTo->FindOrCreateChild(entryToCopyFrom->Info.Name);
-    dirToCopyTo->Info.Reset();
+  switch (ChangeKind) {
+  case Nothing: out << "Nothing "; break;
+  case Add: out << "Add "; break;
+  case Remove: out << "Remove "; break;
+  case Update: out << "Update "; break;
+  case UpdateProps: out << "UpdateProps "; break;
+  }
+
+  if (Ancestor)
+    out << "Ancestor(" << Ancestor << ") ";
+
+  out << Item->FullName << " ";
+}
+
+int StateChange::Depth() const
+{
+  assert(Ancestor);
+  return 0;
+  //return Ancestor->Depth + (ChangeKind == Add ? 1 : 0);
+}
+
+void PostChange(StateChangesMap& changesMap, StateChange::Kind kind,
+		FileInfo * entry, FileInfo * ancestor)
+{
+  StateChange * newChange = new StateChange(kind, entry, ancestor);
+
+  StateChangesMap::iterator i = changesMap.find(entry->FullName);
+  if (i == changesMap.end()) {
+    std::pair<StateChangesMap::iterator, bool> result =
+      changesMap.insert(StateChangesPair(entry->FullName, newChange));
+    assert(result.second);
   } else {
-    entryToCopyFrom->Copy(dirToCopyTo, false);
+    newChange->Next = (*i).second;
+    (*i).second = newChange;
   }
-}
-
-void ObjectCopy::Report()
-{
-  if (DatabaseOnly) return;
-  if (! copyDone)
-    std::cout << Path::Combine(dirToCopyTo->Info.FullName,
-			       entryToCopyFrom->Info.Name)
-	      << ": copied" << std::endl;
-}
-
-int ObjectUpdate::Depth() const
-{
-  return entryToUpdate->Depth + 1;
-}
-
-void ObjectUpdate::Identify()
-{
-  std::cout << "ObjectUpdate(" << DatabaseOnly << ", "
-	    << entryToUpdate << " " << entryToUpdate->Info.FullName << ", "
-	    << entryToUpdateFrom << " " << entryToUpdateFrom->Info.FullName << ", \""
-	    << reason << "\")"
-	    << std::endl;
-}
-
-void ObjectUpdate::Prepare()
-{
-  if (DatabaseOnly) return;
-  entryToUpdate->StateMapObj->BackupEntry(entryToUpdate);
-}
-
-void ObjectUpdate::Perform()
-{
-  if (! DatabaseOnly) {
-    assert(entryToUpdateFrom->Info.FileKind() == entryToUpdate->Info.FileKind());
-    assert(entryToUpdateFrom->Info.FileKind() == FileInfo::File);
-    entryToUpdateFrom->Copy(entryToUpdate->Info.FullName);
-  }
-
-  // Force the entry to update itself when the database is written
-  entryToUpdate->Info.Reset();
-}
-
-void ObjectUpdate::Report()
-{
-  if (DatabaseOnly) return;
-  if (! reason.empty())
-    std::cout << entryToUpdate->Info.FullName << ": updated" << std::endl;
-}
-
-int ObjectUpdateProps::Depth() const
-{
-  return entryToUpdate->Depth + 1;
-}
-
-void ObjectUpdateProps::Identify()
-{
-  std::cout << "ObjectUpdateProps(" << DatabaseOnly << ", "
-	    << entryToUpdate << " " << entryToUpdate->Info.FullName << ", "
-	    << entryToUpdateFrom << " " << entryToUpdateFrom->Info.FullName << ", \""
-	    << reason << "\")"
-	    << std::endl;
-}
-
-void ObjectUpdateProps::Perform()
-{
-  entryToUpdateFrom->Info.CopyAttributes(entryToUpdate->Info, DatabaseOnly);
-}
-
-void ObjectUpdateProps::Report()
-{
-  if (DatabaseOnly) return;
-  if (! reason.empty())
-    std::cout << entryToUpdate->Info.FullName << ": props updated" << std::endl;
-}
-
-int ObjectDelete::Depth() const
-{
-  return entryToDelete->Depth + 1;
-}
-
-void ObjectDelete::Identify()
-{
-  std::cout << "ObjectDelete(" << DatabaseOnly << ", "
-	    << entryToDelete << " " << entryToDelete->Info.FullName << ")"
-	    << std::endl;
-}
-
-void ObjectDelete::Prepare()
-{
-  if (DatabaseOnly) return;
-  entryToDelete->MarkDeletePending();
-  entryToDelete->StateMapObj->BackupEntry(entryToDelete);
-}
-
-void ObjectDelete::Perform()
-{
-  if (DatabaseOnly || entryToDelete->DeletePending) {
-    StateEntry::children_map::iterator i =
-      entryToDelete->Parent->Children.find(entryToDelete->Info.Name);
-    assert(i != entryToDelete->Parent->Children.end());
-    entryToDelete->Parent->Children.erase(i);
-  }
-
-  if (entryToDelete->DeletePending) {
-    if (entryToDelete->Exists())
-      entryToDelete->Delete();
-    entryToDelete->DeletePending = false;
-  }
-}
-
-void ObjectDelete::Report()
-{
-  if (DatabaseOnly) return;
-  std::cout << entryToDelete->Info.FullName << ": deleted" << std::endl;
 }
 
 } // namespace Attic

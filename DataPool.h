@@ -1,7 +1,7 @@
 #ifndef _DATAPOOL_H
 #define _DATAPOOL_H
 
-#include "error.h"
+#include "StateMap.h"
 #include "Location.h"
 
 #include <vector>
@@ -9,27 +9,8 @@
 
 namespace Attic {
 
-class Manager
-{
-};
-
-class Job
-{
-};
-
-class Closure
-{
-};
-
-template <typename T>
-class TypedClosure
-{
-};
-
 // A DataPool represents a collection of data which is to be
 // replicated amongst two or more target DirectoryTree's.
-
-class Location;
 
 class DataPool
 {
@@ -41,55 +22,33 @@ public:
   // place by causing all locations after the first to simply mimic
   // the first -- meaning that bidirectional updating cannot take
   // place.
-  StateMap * CommonAncestor;
+  Path              CommonAncestorPath;
+  StateMap *	    CommonAncestor;
+  StateChangesMap * AllChanges;
 
-  DataPool() : CommonAncestor(NULL) {}
+  DataPool() : CommonAncestor(NULL), AllChanges(NULL) {}
   ~DataPool();
 
-  void BindAncestorToFile(const std::string& path) {
-    CommonAncestor = new StateMap;
-    CommonAncestor->BindToFile(path);
+  void Initialize() {
+    for (std::vector<Location *>::iterator i = Locations.begin();
+	 i != Locations.end();
+	 i++)
+      (*i)->Initialize();
   }
-  void BindAncestorToPath(const std::string& path) {
-    CommonAncestor = new StateMap(path);
+
+  void UseAncestor() {
+    if (! CommonAncestor)
+      CommonAncestor = new StateMap;
   }
-};
 
-class Broker
-{
-public:
-  void GetSignature();
-  void ApplyDelta();
-  void ReceiveFile();
-  void TransmitFile();
-};
+  void LoadAncestorFromFile(const Path& path) {
+    UseAncestor();
+    CommonAncestorPath = path;
+    CommonAncestor->LoadFrom(CommonAncestorPath);
+  }
 
-class Socket;
-
-class RemoteBroker
-{
-public:
-  std::string  Hostname;
-  unsigned int PortNumber;
-  std::string  Protocol;
-  std::string  Username;
-  std::string  Password;
-
-private:
-  Socket *     Connection;
-};
-
-// An Archive is a location -- always related to another location --
-// where generational backups are kept whenever a destructive update
-// is performed.
-
-class Archive
-{
-public:
-  Location *  Storage;
-  int	      Generations;
-  std::string DateFormat;
-  mode_t      DefaultFileMode;
+  void ComputeChanges();
+  void ApplyChanges(std::ostream& out);
 };
 
 } // namespace Attic
