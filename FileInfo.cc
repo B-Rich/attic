@@ -164,8 +164,6 @@ void FileInfo::SetPath(const Path& _FullName)
     Pathname = Path::Combine(Repository->CurrentPath, FullName);
   else
     Pathname = FullName;
-
-  Reset();
 }
 
 void FileInfo::GetFileInfos(ChildrenMap& store) const
@@ -423,33 +421,20 @@ void FileInfo::Move(const Path& dest)
 FileInfo * FileInfo::ReadFrom(char *& data, FileInfo * parent,
 			      Location * repository)
 {
-  FileInfo * entry = NULL;
+  FileInfo * entry = new FileInfo(repository);
 
-  unsigned char flags;
-  read_binary_number(data, flags);
+  read_binary_string(data, entry->Name);
+  read_binary_number(data, static_cast<FileInfoData&>(*entry));
 
-  if (! (flags & FILEINFO_VIRTUAL)) {
-    Path name;
-    read_binary_string(data, name);
-
-    if (parent)
-      name = Path::Combine(parent->FullName, name);
-
-    entry = new FileInfo(name, parent, repository);
-    entry->flags = flags;
-
-    if (flags & FILEINFO_DIDSTAT && flags & FILEINFO_EXISTS)
-      read_binary_number(data, entry->info);
-    if (flags & FILEINFO_READCSUM)
-      read_binary_number(data, entry->csum);
+  entry->Parent = parent;
+  if (parent) {
+    entry->SetPath(Path::Combine(parent->FullName, entry->Name));
+    parent->AddChild(entry);
   } else {
-    assert(! parent);
-    entry = new FileInfo(repository);
-    entry->flags = flags;
+    entry->SetPath(entry->Name);
   }
 
-  if (flags & FILEINFO_DIDSTAT && flags & FILEINFO_EXISTS &&
-      (entry->info.st_mode & S_IFMT) == S_IFDIR) {
+  if (entry->IsDirectory()) {
     int children = read_binary_long<int>(data);
     for (int i = 0; i < children; i++)
       ReadFrom(data, entry, repository);
@@ -494,19 +479,12 @@ void FileInfo::DumpTo(std::ostream& out, bool verbose, int depth)
       (*i).second->DumpTo(out, verbose, depth + 1);
 }
 
-void FileInfo::WriteTo(std::ostream& out)
+void FileInfo::WriteTo(std::ostream& out) const
 {
-  write_binary_number(out, flags);
+  write_binary_string(out, Name);
+  write_binary_number(out, static_cast<const FileInfoData&>(*this));
 
-  if (! IsVirtual()) {
-    write_binary_string(out, Name);
-    if (Exists())
-      write_binary_number(out, info);
-    if (IsRegularFile())
-      write_binary_number(out, Checksum());
-  }
-
-  if (Exists() && IsDirectory()) {
+  if (IsDirectory()) {
     write_binary_long(out, (int)ChildrenSize());
     for (ChildrenMap::iterator i = ChildrenBegin();
 	 i != ChildrenEnd();

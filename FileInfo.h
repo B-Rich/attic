@@ -97,17 +97,41 @@ public:
 #define FILEINFO_EXISTS   0x10
 #define FILEINFO_ALLFLAGS 0xff
 
+class FileInfoData
+{
+protected:
+  mutable unsigned char flags;
+  mutable struct stat	info;
+  mutable md5sum_t	csum;
+
+public:
+  typedef unsigned char flags_t;
+
+  FileInfoData(flags_t _flags) : flags(_flags) {}
+
+  void Reset() {
+    flags = FILEINFO_NOFLAGS;
+  }
+
+  void SetFlags(flags_t _flags) {
+    flags |= _flags;
+  }
+  void ClearFlags(flags_t _flags = FILEINFO_ALLFLAGS) {
+    flags &= ~_flags;
+  }
+  bool HasFlags(flags_t _flags = FILEINFO_ALLFLAGS) const {
+    return flags & _flags;
+  }
+};
+
 class Location;
-class FileInfo
+class FileInfo : public FileInfoData
 {
 public:
   typedef std::map<std::string, FileInfo *>  ChildrenMap;
   typedef std::pair<std::string, FileInfo *> ChildrenPair;
 
 private:
-  mutable unsigned char flags;
-  mutable struct stat	info;
-  mutable md5sum_t	csum;
   mutable ChildrenMap * Children; // This is dynamically generated on-demand
 
   void dostat() const;
@@ -121,14 +145,14 @@ public:
 
 public:
   FileInfo(Location * _Repository = NULL)
-    : flags(FILEINFO_DIDSTAT | FILEINFO_VIRTUAL),
+    : FileInfoData(FILEINFO_DIDSTAT | FILEINFO_VIRTUAL),
       Repository(_Repository), Parent(NULL), Children(NULL) {
     info.st_mode |= S_IFDIR;
   }
 
   FileInfo::FileInfo(const Path& _FullName, FileInfo * _Parent = NULL,
 		     Location * _Repository = NULL)
-    : flags(FILEINFO_NOFLAGS),
+    : FileInfoData(FILEINFO_NOFLAGS),
       Repository(_Repository), Parent(_Parent), Children(NULL) {
     SetPath(_FullName);
     if (Parent) Parent->AddChild(this);
@@ -137,19 +161,6 @@ public:
   ~FileInfo();
 
   void SetPath(const Path& _FullName);
-  void Reset() {
-    flags = FILEINFO_NOFLAGS;
-  }
-
-  void SetFlags(unsigned char _flags) {
-    flags |= _flags;
-  }
-  void ClearFlags(unsigned char _flags = FILEINFO_ALLFLAGS) {
-    flags &= ~_flags;
-  }
-  bool HasFlags(unsigned char _flags = FILEINFO_ALLFLAGS) const {
-    return flags & _flags;
-  }
 
   bool Exists() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
@@ -235,6 +246,7 @@ public:
   md5sum_t CurrentChecksum() const;
   FileInfo Directory() const;
   FileInfo LinkReference() const;
+
   void	   CreateDirectory();
   void	   Delete();
   void	   Copy(const Path& dest);
@@ -269,8 +281,8 @@ public:
   static FileInfo * ReadFrom(char *& data, FileInfo * parent = NULL,
 			     Location * repository = NULL);
 
+  void WriteTo(std::ostream& out) const;
   void DumpTo(std::ostream& out, bool verbose, int depth = 0);
-  void WriteTo(std::ostream& out);
 };
 
 class File
