@@ -16,40 +16,20 @@ AM_PROG_LIBTOOL
 # Checks for emacs lisp path
 AM_PATH_LISPDIR
 
-# check for pcre
-AC_CACHE_CHECK(
-  [if libpcre is available],
-  [libpcre_avail],
-  [libpcre_save_libs=$LIBS
-   LIBS="-lpcre $LIBS"
-   AC_LANG_PUSH(C++)
-   AC_TRY_LINK(
-     [#include <pcre.h>],
-     [pcre_free((pcre *)NULL);],
-     [libpcre_avail=true],
-     [libpcre_avail=false])
-   AC_LANG_POP
-   LIBS=$libpcre_save_libs])
-
-if [test x$libpcre_avail = xtrue ]; then
-  AM_CONDITIONAL(HAVE_PCRE, true)
-  LIBS="-lpcre $LIBS"
-else
-  AC_MSG_FAILURE("Could not find pcre library (set CPPFLAGS and LDFLAGS?)")
-fi
-
 # check for the boost libraries
 AC_CACHE_CHECK(
   [if boost is available],
   [boost_cpplib_avail],
   [boost_save_libs=$LIBS
-   LIBS="-lboost_thread $LIBS"
+   LIBS="-lboost_thread -lboost_regex $LIBS"
    AC_LANG_PUSH(C++)
    AC_TRY_LINK(
 	 [#include <boost/thread/thread.hpp>
+	  #include <boost/regex.hpp>
 	  #include <iostream>
 	  void hello() {
-	    std::cout << "Hello, world!" << std::endl;
+	    boost::regex re("Hello, world!");
+	    std::cout << boost::regex_match("Hello, world!", re) << std::endl;
 	  }],
 	 [boost::thread thrd(&hello);
 	  thrd.join();
@@ -60,7 +40,7 @@ AC_CACHE_CHECK(
    LIBS=$boost_save_libs])
 if [test x$boost_cpplib_avail = xtrue ]; then
   AM_CONDITIONAL(HAVE_BOOST, true)
-  LIBS="-lboost_thread $LIBS"
+  LIBS="-lboost_thread -lboost_regex $LIBS"
 else
   AC_MSG_FAILURE("Could not find the boost libraries (set CPPFLAGS and LDFLAGS?)")
 fi

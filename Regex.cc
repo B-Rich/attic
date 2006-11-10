@@ -16,7 +16,11 @@ Regex::Regex(const std::string& pat, bool globStyle) : Exclude(false)
       p++;
   }
 
-  if (globStyle) {
+  std::string cpat;
+
+  if (! globStyle) {
+    cpat = p;
+  } else {
     bool hadSlash = false;
     for (const char * q = p; *q; q++)
       if (*q == '/') {
@@ -25,66 +29,37 @@ Regex::Regex(const std::string& pat, bool globStyle) : Exclude(false)
       }
 
     if (! hadSlash)
-      Pattern += "^";
+      cpat += "^";
 
     while (*p) {
       switch (*p) {
       case '?':
-	Pattern += '.';
+	cpat += '.';
 	break;
 
       case '*':
 	if (*(p + 1) == '*')
-	  Pattern += ".*";
+	  cpat += ".*";
 	else
-	  Pattern += "[^/]*";
+	  cpat += "[^/]*";
 	break;
 
       case '+':
       case '.':
       case '$':
       case '^':
-	Pattern += '\\';
-	Pattern += *p;
+	cpat += '\\';
+	cpat += *p;
 	break;
 
       default:
-	Pattern += *p;
+	cpat += *p;
 	break;
       }
       ++p;
     }
-    Pattern += "$";
-  } else {
-    Pattern = p;
+    cpat += "$";
   }
 
-  const char *error;
-  int erroffset;
-  regexp = pcre_compile(Pattern.c_str(), PCRE_CASELESS,
-			&error, &erroffset, NULL);
-  if (! regexp)
-    throw Exception(std::string("Failed to compile regexp '") + Pattern + "'");
-}
-
-Regex::Regex(const Regex& m) : Exclude(m.Exclude), Pattern(m.Pattern)
-{
-  const char *error;
-  int erroffset;
-  regexp = pcre_compile(Pattern.c_str(), PCRE_CASELESS,
-			&error, &erroffset, NULL);
-  assert(regexp);
-}
-
-Regex::~Regex() {
-  if (regexp)
-    pcre_free((pcre *)regexp);
-}
-
-bool Regex::IsMatch(const std::string& str) const
-{
-  static int ovec[30];
-  int result = pcre_exec((pcre *)regexp, NULL,
-			 str.c_str(), str.length(), 0, 0, ovec, 30);
-  return result >= 0 && ! Exclude;
+  Pattern.assign(cpat);
 }

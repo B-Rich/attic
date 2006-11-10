@@ -3,22 +3,23 @@
 
 #include <string>
 
-#include <pcre.h>
+#include <boost/regex.hpp>
 
 class Regex
 {
-  void * regexp;
+  boost::regex Pattern;
 
 public:
   bool Exclude;
-  std::string Pattern;
 
-  explicit Regex(const std::string& pattern,
-		 bool globStyle = false);
-  Regex(const Regex&);
-  ~Regex();
+  explicit Regex(const std::string& pattern, bool globStyle = false);
 
-  bool IsMatch(const std::string& str) const;
+  Regex::Regex(const Regex& m)
+    : Exclude(m.Exclude), Pattern(m.Pattern) {}
+
+  bool Regex::IsMatch(const std::string& str) const {
+    return boost::regex_match(str, Pattern) && ! Exclude;
+  }
 };
 
 #endif // _REGEX_H
