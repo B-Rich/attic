@@ -33,7 +33,7 @@ int main(int argc, char *args[])
       StateMap stateMap;
       stateMap.LoadFrom(database);
       if (stateMap.Root)
-	stateMap.Root->DumpTo(std::cout);
+	stateMap.Root->DumpTo(std::cout, optionTemplate.VerboseLogging);
       else
 	std::cout << "Database has no contents!" << std::endl;
 

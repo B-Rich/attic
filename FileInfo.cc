@@ -457,27 +457,30 @@ FileInfo * FileInfo::ReadFrom(char *& data, FileInfo * parent,
   return entry;
 }
 
-void FileInfo::DumpTo(std::ostream& out, int depth)
+void FileInfo::DumpTo(std::ostream& out, bool verbose, int depth)
 {
   for (int i = 0; i < depth; i++)
     out << "  ";
 
-  if (IsDirectory())
-    out << "DIR: ";
-  else if (IsRegularFile())
-    out << "FIL: ";
-  else if (IsSymbolicLink())
-    out << "SYM: ";
-  else if (Exists())
-    out << "SPC: ";
-  else
-    out << "NON: ";
+  if (verbose) {
+    if (IsDirectory())
+      out << "DIR: ";
+    else if (IsRegularFile())
+      out << "FIL: ";
+    else if (IsSymbolicLink())
+      out << "SYM: ";
+    else if (Exists())
+      out << "SPC: ";
+    else
+      out << "NON: ";
+  }
 
-  out << FullName;
+  out << FullName << ':';
 
   if (IsRegularFile()) {
     out << " len " << Length();
-    out << " csum " << Checksum();
+    if (verbose)
+      out << " csum " << Checksum();
   }
   if (Exists())
     out << " mod " << LastWriteTime();
@@ -488,7 +491,7 @@ void FileInfo::DumpTo(std::ostream& out, int depth)
     for (ChildrenMap::iterator i = Children->begin();
 	 i != Children->end();
 	 i++)
-      (*i).second->DumpTo(out, depth + 1);
+      (*i).second->DumpTo(out, verbose, depth + 1);
 }
 
 void FileInfo::WriteTo(std::ostream& out)

@@ -269,7 +269,7 @@ public:
   static FileInfo * ReadFrom(char *& data, FileInfo * parent = NULL,
 			     Location * repository = NULL);
 
-  void DumpTo(std::ostream& out, int depth = 0);
+  void DumpTo(std::ostream& out, bool verbose, int depth = 0);
   void WriteTo(std::ostream& out);
 };
 
