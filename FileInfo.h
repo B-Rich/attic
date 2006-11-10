@@ -95,6 +95,7 @@ public:
 #define FILEINFO_HANDLED  0x04
 #define FILEINFO_VIRTUAL  0x08
 #define FILEINFO_EXISTS   0x10
+#define FILEINFO_ALLFLAGS 0xff
 
 class Location;
 class FileInfo
@@ -143,10 +144,10 @@ public:
   void SetFlags(unsigned char _flags) {
     flags |= _flags;
   }
-  void ClearFlags(unsigned char _flags) {
+  void ClearFlags(unsigned char _flags = FILEINFO_ALLFLAGS) {
     flags &= ~_flags;
   }
-  bool HasFlags(unsigned char _flags) const {
+  bool HasFlags(unsigned char _flags = FILEINFO_ALLFLAGS) const {
     return flags & _flags;
   }
 
@@ -155,38 +156,59 @@ public:
     return flags & FILEINFO_EXISTS;
   }
 
-  off_t& Length() const {
+  const off_t& Length() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     assert(Exists());
     return info.st_size;
+  }
+  void SetLength(const off_t& len) {
+    info.st_size = len;
+  }
+
+  const md5sum_t& Checksum() const;
+  void SetChecksum(const md5sum_t& _csum) {
+    csum = _csum;
   }
 
   mode_t Permissions() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return info.st_mode & ~S_IFMT;
   }    
-  void SetPermissions(mode_t mode) {
-    if (! (flags & FILEINFO_DIDSTAT)) dostat();
+  void SetPermissions(const mode_t& mode) {
     info.st_mode = (((info.st_mode & S_IFMT) | mode) |
 		    info.st_mode & ~S_IFMT);
   }    
 
-  uid_t& OwnerId() const {
+  const uid_t& OwnerId() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return info.st_uid;
   }    
-  gid_t& GroupId() const {
+  void SetOwnerId(const uid_t& uid) const {
+    info.st_uid = uid;
+  }    
+
+  const gid_t& GroupId() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return info.st_gid;
   }    
+  void SetGroupId(const gid_t& gid) {
+    info.st_gid = gid;
+  }    
 
-  struct timespec& LastWriteTime() const {
+  DateTime LastWriteTime() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
-    return info.st_mtimespec;
+    return DateTime(info.st_mtimespec);
   }
-  struct timespec& LastAccessTime() const {
+  void SetLastWriteTime(const DateTime& when) {
+    info.st_mtimespec = when;
+  }
+
+  DateTime LastAccessTime() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
-    return info.st_atimespec;
+    return DateTime(info.st_atimespec);
+  }
+  void SetLastAccessTime(const DateTime& when) {
+    info.st_atimespec = when;
   }
 
   int FileKind() const {
@@ -210,19 +232,18 @@ public:
     return (info.st_mode & S_IFMT) == S_IFREG;
   }
 
-  md5sum_t& Checksum() const;
-  md5sum_t  CurrentChecksum() const;
-  FileInfo  Directory() const;
-  FileInfo  LinkReference() const;
-  void	    CreateDirectory();
-  void	    Delete();
-  void	    Copy(const Path& dest);
-  void	    Move(const Path& dest);
-  void	    CopyDetails(FileInfo& dest, bool dataOnly = false);
-  void	    CopyAttributes(FileInfo& dest, bool dataOnly = false);
-  void	    CopyAttributes(const Path& dest);
-  void      GetFileInfos(ChildrenMap& store) const;
-  int	    ChildrenSize() const;
+  md5sum_t CurrentChecksum() const;
+  FileInfo Directory() const;
+  FileInfo LinkReference() const;
+  void	   CreateDirectory();
+  void	   Delete();
+  void	   Copy(const Path& dest);
+  void	   Move(const Path& dest);
+  void	   CopyDetails(FileInfo& dest, bool dataOnly = false);
+  void	   CopyAttributes(FileInfo& dest, bool dataOnly = false);
+  void	   CopyAttributes(const Path& dest);
+  void     GetFileInfos(ChildrenMap& store) const;
+  int	   ChildrenSize() const;
 
   ChildrenMap::iterator ChildrenBegin() const;
   ChildrenMap::iterator ChildrenEnd() const {
@@ -281,16 +302,8 @@ public:
   }
 
   static void SetAccessTimes(const Path& path,
-			     struct timespec LastAccessTime,
-			     struct timespec LastWriteTime)
-  {
-    struct timeval temp[2];
-    TIMESPEC_TO_TIMEVAL(&temp[0], &LastAccessTime);
-    TIMESPEC_TO_TIMEVAL(&temp[1], &LastWriteTime);
-
-    if (utimes(path.c_str(), temp) == -1)
-      throw Exception("Failed to set last write time of '" + path + "'");
-  }
+			     const DateTime& LastAccessTime,
+			     const DateTime& LastWriteTime);
 };
 
 class Directory : public File
@@ -308,16 +321,6 @@ public:
       throw Exception("Failed to remove directory '" + path + "'");
   }
 };
-
-inline bool operator==(struct timespec& a, struct timespec& b)
-{
-  return std::memcmp(&a, &b, sizeof(struct timespec)) == 0;
-}
-
-inline bool operator!=(struct timespec& a, struct timespec& b)
-{
-  return ! (a == b);
-}
 
 } // namespace Attic
 

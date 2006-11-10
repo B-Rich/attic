@@ -300,16 +300,17 @@ void FileInfo::CopyDetails(FileInfo& dest, bool dataOnly)
 {
   dest.flags	    = flags;
   dest.info.st_mode = info.st_mode;
-  dest.Length()	    = Length();
+
+  dest.SetLength(Length());
 
   if (IsRegularFile() &&
       (dataOnly || flags & FILEINFO_READCSUM))
-    dest.csum  = Checksum();
+    dest.SetChecksum(Checksum());
 }
 
 void FileInfo::CopyAttributes(FileInfo& dest, bool dataOnly)
 {
-  dest.flags |= FILEINFO_DIDSTAT;
+  dest.SetFlags(FILEINFO_DIDSTAT);
 
   if (! dataOnly) {
     File::SetPermissions(dest.Pathname, Permissions());
@@ -318,14 +319,14 @@ void FileInfo::CopyAttributes(FileInfo& dest, bool dataOnly)
 
   dest.SetPermissions(Permissions());
 
-  dest.OwnerId() = OwnerId();
-  dest.GroupId() = GroupId();
+  dest.SetOwnerId(OwnerId());
+  dest.SetGroupId(GroupId());
 
   if (! dataOnly)
     File::SetAccessTimes(dest.Pathname, LastAccessTime(), LastWriteTime());
 
-  dest.LastAccessTime() = LastAccessTime();
-  dest.LastWriteTime()  = LastWriteTime();
+  dest.SetLastAccessTime(LastAccessTime());
+  dest.SetLastWriteTime(LastWriteTime());
 }
 
 void FileInfo::CopyAttributes(const Path& dest)
@@ -335,7 +336,7 @@ void FileInfo::CopyAttributes(const Path& dest)
   File::SetAccessTimes(dest, LastAccessTime(), LastWriteTime());
 }
 
-md5sum_t& FileInfo::Checksum() const
+const md5sum_t& FileInfo::Checksum() const
 {
 #if 0
   if (! IsRegularFile() || ! Exists())
@@ -479,7 +480,7 @@ void FileInfo::DumpTo(std::ostream& out, int depth)
     out << " csum " << Checksum();
   }
   if (Exists())
-    out << " mod " << DateTime(LastWriteTime().tv_sec);
+    out << " mod " << LastWriteTime();
 
   out << std::endl;
 
@@ -509,6 +510,19 @@ void FileInfo::WriteTo(std::ostream& out)
 	 i++)
       (*i).second->WriteTo(out);
   }
+}
+
+void File::SetAccessTimes(const Path& path,
+			  const DateTime& LastAccessTime,
+			  const DateTime& LastWriteTime)
+{
+  struct timeval temp[2];
+
+  temp[0] = LastAccessTime;
+  temp[1] = LastWriteTime;
+
+  if (utimes(path.c_str(), temp) == -1)
+    throw Exception("Failed to set last write time of '" + path + "'");
 }
 
 void Directory::CreateDirectory(const Path& path)

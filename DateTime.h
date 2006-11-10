@@ -23,8 +23,12 @@ public:
 
   DateTime() {}
   DateTime(const DateTime& when) : secs(when.secs), nsecs(when.nsecs) {}
-  DateTime(const std::time_t _secs, const long _nsecs = 0)
+  DateTime(const std::time_t& _secs, const long _nsecs = 0)
     : secs(_secs), nsecs(_nsecs) {}
+  DateTime(const struct timeval& when)
+    : secs(when.tv_sec), nsecs(when.tv_usec * 1000) {}
+  DateTime(const struct timespec& when)
+    : secs(when.tv_sec), nsecs(when.tv_nsec) {}
   DateTime(const std::string& timestr);
 
   DateTime& operator=(const DateTime& when) {
@@ -35,6 +39,16 @@ public:
   DateTime& operator=(const std::time_t _secs) {
     secs  = _secs;
     nsecs = 0;
+    return *this;
+  }
+  DateTime& operator=(const struct timeval& when) {
+    secs  = when.tv_sec;
+    nsecs = when.tv_usec * 1000;
+    return *this;
+  }
+  DateTime& operator=(const struct timespec& when) {
+    secs  = when.tv_sec;
+    nsecs = when.tv_nsec;
     return *this;
   }
   DateTime& operator=(const std::string& timestr) {
@@ -94,10 +108,22 @@ public:
   }
 
   operator bool() const {
-    return secs != 0;
+    return secs != 0 && nsecs != 0;
   }
   operator std::time_t() const {
     return secs;
+  }
+  operator struct timeval() const {
+    struct timeval temp;
+    temp.tv_sec	 = secs;
+    temp.tv_usec = nsecs / 1000;
+    return temp;
+  }
+  operator struct timespec() const {
+    struct timespec temp;
+    temp.tv_sec	 = secs;
+    temp.tv_nsec = nsecs;
+    return temp;
   }
   operator std::string() const {
     return to_string();
