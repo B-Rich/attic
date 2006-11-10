@@ -74,10 +74,4 @@ std::deque<FileInfo *> * StateMap::FindDuplicate(FileInfo * item)
   return NULL;
 }
 
-void StateMap::CompareTo(const StateMap * ancestor,
-			 StateChangesMap& changesMap) const
-{
-  Root->CompareTo(ancestor->Root, changesMap);
-}
-
 } // namespace Attic

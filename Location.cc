@@ -87,7 +87,7 @@ void Location::ComputeChanges(const StateMap * ancestor,
        i != CurrentChanges->end();
        i++) {
     for (StateChange * ptr = (*i).second; ptr; ptr = ptr->Next)
-      PostChange(changesMap, ptr->ChangeKind, ptr->Item, ptr->Ancestor);
+      PostChange(ptr->Item, ptr->Ancestor, ptr->ChangeKind, changesMap);
   }
 }
 

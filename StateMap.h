@@ -38,7 +38,9 @@ public:
 
   std::deque<FileInfo *> * FindDuplicate(FileInfo * item);
 
-  void CompareTo(const StateMap * ancestor, StateChangesMap& changesMap) const;
+  void CompareTo(const StateMap * ancestor, StateChangesMap& changesMap) const {
+    CompareFiles(Root, ancestor->Root, changesMap);
+  }
 };
 
 } // namespace Attic

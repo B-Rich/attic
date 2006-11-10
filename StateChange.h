@@ -47,8 +47,25 @@ public:
   ExistsAtLocation(StateMap * stateMap, Location * targetLocation) const;
 };
 
-void PostChange(StateChangesMap& changesMap, StateChange::Kind kind,
-		FileInfo * entry, FileInfo * ancestor);
+void PostChange(FileInfo * entry, FileInfo * ancestor,
+		StateChange::Kind kind, StateChangesMap& changesMap);
+
+void PostAddChange(FileInfo * entry, StateChangesMap& changesMap);
+void PostRemoveChange(const std::string& childName, FileInfo * entry,
+		      FileInfo * ancestorChild, StateChangesMap& changesMap);
+
+inline void PostUpdateChange(FileInfo * entry, FileInfo * ancestor,
+			     StateChangesMap& changesMap) {
+  PostChange(entry, ancestor, StateChange::Update, changesMap);
+}
+
+inline void PostUpdatePropsChange(FileInfo * entry, FileInfo * ancestor,
+				  StateChangesMap& changesMap) {
+  PostChange(entry, ancestor, StateChange::UpdateProps, changesMap);
+}
+
+void CompareFiles(FileInfo * entry, FileInfo * ancestor,
+		  StateChangesMap& changesMap);
 
 struct StateChangeComparer {
   bool operator()(const StateChange * left, const StateChange * right) const;

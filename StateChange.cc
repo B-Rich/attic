@@ -64,7 +64,7 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
 	if (targetInfo.IsRegularFile() &&
 	    targetInfo.Checksum() == Item->Checksum()) {
 	  StateChangesMap changes;
-	  Item->CompareTo(&targetInfo, changes);
+	  CompareFiles(Item, &targetInfo, changes);
 	  if (! changes.empty()) {
 	    Item->CopyAttributes(targetPath);
 	    out << "p ";
@@ -217,8 +217,8 @@ int StateChange::Depth() const
   //return Ancestor->Depth + (ChangeKind == Add ? 1 : 0);
 }
 
-void PostChange(StateChangesMap& changesMap, StateChange::Kind kind,
-		FileInfo * entry, FileInfo * ancestor)
+void PostChange(FileInfo * entry, FileInfo * ancestor,
+		StateChange::Kind kind, StateChangesMap& changesMap)
 {
   StateChange * newChange = new StateChange(kind, entry, ancestor);
 
@@ -231,6 +231,117 @@ void PostChange(StateChangesMap& changesMap, StateChange::Kind kind,
     newChange->Next = (*i).second;
     (*i).second = newChange;
   }
+}
+
+void PostAddChange(FileInfo * entry, StateChangesMap& changesMap)
+{
+  if (entry->IsDirectory()) {
+    PostChange(entry, NULL, StateChange::Add, changesMap);
+
+    for (FileInfo::ChildrenMap::const_iterator i = entry->ChildrenBegin();
+	 i != entry->ChildrenEnd();
+	 i++)
+      PostAddChange((*i).second, changesMap);
+  } else {
+    PostChange(entry, NULL, StateChange::Add, changesMap);
+  }
+}
+
+void PostRemoveChange(FileInfo * parent, const std::string& childName,
+		      FileInfo * ancestorChild, StateChangesMap& changesMap)
+{
+  FileInfo * missingChild =
+    new FileInfo(Path::Combine(parent->FullName, childName), parent,
+		 parent->Repository);
+
+  if (ancestorChild->IsDirectory())
+    for (FileInfo::ChildrenMap::const_iterator
+	   i = ancestorChild->ChildrenBegin();
+	 i != ancestorChild->ChildrenEnd();
+	 i++)
+      PostRemoveChange(missingChild, (*i).first, (*i).second, changesMap);
+
+  PostChange(missingChild, ancestorChild, StateChange::Remove, changesMap);
+}
+
+void CompareFiles(FileInfo * entry, FileInfo * ancestor,
+		  StateChangesMap& changesMap)
+{
+  assert(entry->Repository);
+
+  if (! ancestor) {
+    PostAddChange(entry, changesMap);
+    return;
+  }
+
+  if (! entry->IsVirtual() && entry->Name != ancestor->Name)
+    throw Exception("Names do not match in comparison: " +
+		    entry->FullName + " != " + ancestor->Name);
+
+  bool updateRegistered = false;
+
+  if (entry->FileKind() != ancestor->FileKind()) {
+    PostUpdateChange(entry, ancestor, changesMap);
+    updateRegistered = true;
+  }
+  else if (entry->IsRegularFile()) {
+    if (entry->Length() != ancestor->Length()) {
+      PostUpdateChange(entry, ancestor, changesMap);
+      updateRegistered = true;
+    }
+    else if (! entry->Repository->TrustLengthOnly) {
+      if (entry->LastWriteTime() != ancestor->LastWriteTime() ||
+	  (! entry->Repository->TrustTimestamps &&
+	   entry->Checksum() != ancestor->Checksum())) {
+	PostUpdateChange(entry, ancestor, changesMap);
+	updateRegistered = true;
+      }
+    }
+  }
+  else if (entry->Exists() &&
+	   entry->LastWriteTime() != ancestor->LastWriteTime()) {
+    PostUpdatePropsChange(entry, ancestor, changesMap);
+    updateRegistered = true;
+  }
+
+  if (! updateRegistered && entry->Exists() &&
+      (entry->Permissions() != ancestor->Permissions() ||
+       entry->OwnerId()     != ancestor->OwnerId()	||
+       entry->GroupId()     != ancestor->GroupId()))
+    PostUpdatePropsChange(entry, ancestor, changesMap);
+
+  if (! entry->IsDirectory())
+    return;
+
+  bool updateProps = false;
+
+  for (FileInfo::ChildrenMap::iterator i = entry->ChildrenBegin();
+       i != entry->ChildrenEnd();
+       i++) {
+    FileInfo * ancestorChild = ancestor->FindChild((*i).first);
+    if (ancestorChild != NULL) {
+      ancestorChild->SetFlags(FILEINFO_HANDLED);
+      CompareFiles((*i).second, ancestorChild, changesMap);
+    } else {
+      PostAddChange((*i).second, changesMap);
+      updateProps = true;
+    }
+  }
+
+  for (FileInfo::ChildrenMap::iterator i = ancestor->ChildrenBegin();
+       i != ancestor->ChildrenEnd();
+       i++) {
+    if ((*i).second->HasFlags(FILEINFO_HANDLED)) {
+      (*i).second->ClearFlags(FILEINFO_HANDLED);
+    }
+    else if (entry->FindChild((*i).first) == NULL) {
+      PostRemoveChange(entry, (*i).first, (*i).second, changesMap);
+      updateProps = true;
+    }
+  }
+
+  if (updateProps && ! updateRegistered)
+    PostUpdatePropsChange(entry, ancestor, changesMap);
 }
 
 bool StateChangeComparer::operator()(const StateChange * left,

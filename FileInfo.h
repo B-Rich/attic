@@ -2,7 +2,6 @@
 #define _FILEINFO_H
 
 #include "DateTime.h"
-#include "StateChange.h"
 
 #include <string>
 #include <map>
@@ -141,6 +140,16 @@ public:
     flags = FILEINFO_NOFLAGS;
   }
 
+  void SetFlags(unsigned char _flags) {
+    flags |= _flags;
+  }
+  void ClearFlags(unsigned char _flags) {
+    flags &= ~_flags;
+  }
+  bool HasFlags(unsigned char _flags) const {
+    return flags & _flags;
+  }
+
   bool Exists() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return flags & FILEINFO_EXISTS;
@@ -241,14 +250,6 @@ public:
 
   void DumpTo(std::ostream& out, int depth = 0);
   void WriteTo(std::ostream& out);
-
-  void PostAddChange(StateChangesMap& changesMap);
-  void PostRemoveChange(const std::string& childName,
-			FileInfo * ancestorChild, StateChangesMap& changesMap);
-  void PostUpdateChange(FileInfo * ancestor, StateChangesMap& changesMap);
-  void PostUpdatePropsChange(FileInfo * ancestor, StateChangesMap& changesMap);
-
-  void CompareTo(FileInfo * ancestor, StateChangesMap& changesMap);
 };
 
 class File
