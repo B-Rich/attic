@@ -1,7 +1,5 @@
 #include <fstream>
 
-#include <sys/types.h>
-#include <sys/time.h>
 #include <dirent.h>
 #include <errno.h>
 #include <cstdlib>

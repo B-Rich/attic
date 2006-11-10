@@ -4,93 +4,71 @@
 #include <ctime>
 #include <sstream>
 
-class DateTime;
-class Date
+#include <sys/types.h>
+#include <sys/time.h>
+
+class DateTime
 {
-  Date(const DateTime& _when);
+protected:
+  std::time_t secs;
+  long	      nsecs;
 
- protected:
-  std::time_t when;
-
- public:
-  static Date         Now;
   static const char * formats[];
   static int	      current_year;
   static std::string  input_format;
   static std::string  output_format;
 
-  Date() : when(0) {}
-  Date(const Date& _when) : when(_when.when) {}
+public:
+  static DateTime Now;
 
-  Date(const std::time_t _when) : when(_when) {
-#if 0
-    struct std::tm * moment = std::localtime(&_when);
-    moment->tm_hour = 0;
-    moment->tm_min  = 0;
-    moment->tm_sec  = 0;
-    when = std::mktime(moment);
-#endif
-  }
-  Date(const std::string& _when);
+  DateTime() {}
+  DateTime(const DateTime& when) : secs(when.secs), nsecs(when.nsecs) {}
+  DateTime(const std::time_t _secs, const long _nsecs = 0)
+    : secs(_secs), nsecs(_nsecs) {}
+  DateTime(const std::string& timestr);
 
-  virtual ~Date() {}
-
-  Date& operator=(const Date& _when) {
-    when = _when.when;
+  DateTime& operator=(const DateTime& when) {
+    secs  = when.secs;
+    nsecs = when.nsecs;
     return *this;
   }
-  Date& operator=(const std::time_t _when) {
-    return *this = Date(_when);
-  }
-  Date& operator=(const DateTime& _when) {
-    return *this = Date(_when);
-  }
-  Date& operator=(const std::string& _when) {
-    return *this = Date(_when);
-  }
-
-  long operator-=(const Date& date) {
-    return (when - date.when) / 86400;
-  }
-
-  virtual Date& operator+=(const long days) {
-    // jww (2006-03-26): This is not accurate enough when DST is in effect!
-    assert(0);
-    when += days * 86400;
+  DateTime& operator=(const std::time_t _secs) {
+    secs  = _secs;
+    nsecs = 0;
     return *this;
   }
-  virtual Date& operator-=(const long days) {
-    assert(0);
-    when -= days * 86400;
+  DateTime& operator=(const std::string& timestr) {
+    return *this = DateTime(timestr);
+  }
+
+  long operator-=(const DateTime& date) {
+    return secs - date.secs;
+  }
+
+  virtual DateTime& operator+=(const long _secs) {
+    secs += _secs;
+    return *this;
+  }
+  virtual DateTime& operator-=(const long _secs) {
+    secs -= _secs;
     return *this;
   }
 
-#define DEF_DATE_OP(OP)				\
-  bool operator OP(const Date& other) const {	\
-    return when OP other.when;			\
+#define DEF_DATETIME_OP(OP)					\
+  bool operator OP(const DateTime& other) const {		\
+    return (secs OP other.secs ||				\
+	    (secs == other.secs && nsecs OP other.nsecs));	\
   }
 
-  DEF_DATE_OP(<)
-  DEF_DATE_OP(<=)
-  DEF_DATE_OP(>)
-  DEF_DATE_OP(>=)
-  DEF_DATE_OP(==)
-  DEF_DATE_OP(!=)
+  DEF_DATETIME_OP(<)
+  DEF_DATETIME_OP(<=)
+  DEF_DATETIME_OP(>)
+  DEF_DATETIME_OP(>=)
+  DEF_DATETIME_OP(==)
+  DEF_DATETIME_OP(!=)
 
-  operator bool() const {
-    return when != 0;
-  }
-  operator std::time_t() const {
-    return when;
-  }
-  operator std::string() const {
-    return to_string();
-  }
-
-  std::string to_string(const std::string& format = output_format) const {
-    char buf[64];
-    std::strftime(buf, 63, format.c_str(), localtime());
-    return buf;
+  std::tm * localtime() const {
+    return std::localtime(&secs);
   }
 
   int year() const {
@@ -105,101 +83,6 @@ class Date
   int wday() const {
     return localtime()->tm_wday;
   }
-
-  std::tm * localtime() const {
-    return std::localtime(&when);
-  }
-
-  void write(std::ostream& out,
-	     const std::string& format = output_format) const {
-    out << to_string(format);
-  }
-
-  void parse(std::istream& in);
-
-  friend class DateTime;
-};
-
-inline long operator-(const Date& left, const Date& right) {
-  Date temp(left);
-  temp -= right;
-  return temp;
-}
-
-inline Date operator+(const Date& left, const long days) {
-  Date temp(left);
-  temp += days;
-  return temp;
-}
-
-inline Date operator-(const Date& left, const long days) {
-  Date temp(left);
-  temp -= days;
-  return temp;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Date& moment) {
-  moment.write(out);
-  return out;
-}
-
-inline std::istream& operator>>(std::istream& in, Date& moment) {
-  moment.parse(in);
-  return in;
-}
-
-class DateTime : public Date
-{
- public:
-  static DateTime Now;
-
-  DateTime() : Date() {}
-  DateTime(const DateTime& _when) : Date(_when.when) {}
-  DateTime(const Date& _when) : Date(_when) {}
-
-  DateTime(const std::time_t _when) : Date(_when) {}
-  DateTime(const std::string& _when);
-
-  DateTime& operator=(const DateTime& _when) {
-    when = _when.when;
-    return *this;
-  }
-  DateTime& operator=(const Date& _when) {
-    when = _when.when;
-    return *this;
-  }
-  DateTime& operator=(const std::time_t _when) {
-    return *this = DateTime(_when);
-  }
-  DateTime& operator=(const std::string& _when) {
-    return *this = DateTime(_when);
-  }
-
-  long operator-=(const DateTime& date) {
-    return when - date.when;
-  }
-
-  virtual DateTime& operator+=(const long secs) {
-    when += secs;
-    return *this;
-  }
-  virtual DateTime& operator-=(const long secs) {
-    when -= secs;
-    return *this;
-  }
-
-#define DEF_DATETIME_OP(OP)				\
-  bool operator OP(const DateTime& other) const {	\
-    return when OP other.when;				\
-  }
-
-  DEF_DATETIME_OP(<)
-  DEF_DATETIME_OP(<=)
-  DEF_DATETIME_OP(>)
-  DEF_DATETIME_OP(>=)
-  DEF_DATETIME_OP(==)
-  DEF_DATETIME_OP(!=)
-
   int hour() const {
     return localtime()->tm_hour;
   }
@@ -210,7 +93,36 @@ class DateTime : public Date
     return localtime()->tm_sec;
   }
 
+  operator bool() const {
+    return secs != 0;
+  }
+  operator std::time_t() const {
+    return secs;
+  }
+  operator std::string() const {
+    return to_string();
+  }
+
   void parse(std::istream& in);
+  void write(std::ostream& out,
+	     const std::string& format = output_format) const {
+    out << to_string(format);
+  }
+
+  std::string to_string(const std::string& format = output_format) const {
+    char buf[64];
+    std::strftime(buf, 63, format.c_str(), localtime());
+    return buf;
+  }
+
+  friend std::ostream& operator<<(std::ostream& out, const DateTime& moment);
+
+protected:
+  static bool parse_date_mask(const char * date_str, struct std::tm * result);
+  static bool parse_date(const char * date_str, std::time_t * result, const int year);
+  static bool quick_parse_date(const char * date_str, std::time_t * result) {
+    return parse_date(date_str, result, DateTime::current_year + 1900);
+  }
 };
 
 inline long operator-(const DateTime& left, const DateTime& right) {
@@ -236,15 +148,6 @@ std::ostream& operator<<(std::ostream& out, const DateTime& moment);
 inline std::istream& operator>>(std::istream& in, DateTime& moment) {
   moment.parse(in);
   return in;
-}
-
-inline Date::Date(const DateTime& _when) {
-  assert(0);
-  struct std::tm * moment = _when.localtime();
-  moment->tm_hour = 0;
-  moment->tm_min  = 0;
-  moment->tm_sec  = 0;
-  when = std::mktime(moment);
 }
 
 #endif // _DATETIME_H

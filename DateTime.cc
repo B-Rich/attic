@@ -29,12 +29,12 @@ typedef std::istream::pos_type istream_pos_type;
 typedef std::ostream::pos_type ostream_pos_type;
 #endif
 
-Date	    Date::Now(std::time(NULL));
-int	    Date::current_year	= Date::Now.year();
-std::string Date::input_format;
-std::string Date::output_format = "%Y/%m/%d";
+DateTime    DateTime::Now(std::time(NULL));
+int	    DateTime::current_year = DateTime::Now.year();
+std::string DateTime::input_format;
+std::string DateTime::output_format = "%Y/%m/%d";
 
-const char * Date::formats[] = {
+const char * DateTime::formats[] = {
   "%Y/%m/%d",
   "%m/%d",
   "%Y.%m.%d",
@@ -49,66 +49,51 @@ const char * Date::formats[] = {
   NULL
 };
 
-DateTime DateTime::Now(std::time(NULL));
+static std::time_t base = -1;
+static int base_year = -1;
 
-namespace {
-  static std::time_t base = -1;
-  static int base_year = -1;
+static const int month_days[12] = {
+  31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+};
 
-  static const int month_days[12] = {
-    31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-  };
-
-  bool parse_date_mask(const char * date_str, struct std::tm * result)
-  {
-    if (! Date::input_format.empty()) {
-      std::memset(result, INT_MAX, sizeof(struct std::tm));
-      if (strptime(date_str, Date::input_format.c_str(), result))
-	return true;
-    }
-    for (const char ** f = Date::formats; *f; f++) {
-      std::memset(result, INT_MAX, sizeof(struct std::tm));
-      if (strptime(date_str, *f, result))
-	return true;
-    }
-    return false;
+bool DateTime::parse_date_mask(const char * date_str, struct std::tm * result)
+{
+  if (! DateTime::input_format.empty()) {
+    std::memset(result, INT_MAX, sizeof(struct std::tm));
+    if (strptime(date_str, DateTime::input_format.c_str(), result))
+      return true;
   }
-
-  bool parse_date(const char * date_str, std::time_t * result, const int year)
-  {
-    struct std::tm when;
-
-    if (! parse_date_mask(date_str, &when))
-      return false;
-
-    when.tm_hour = 0;
-    when.tm_min  = 0;
-    when.tm_sec  = 0;
-
-    if (when.tm_year == -1)
-      when.tm_year = ((year == -1) ? Date::current_year : (year - 1900));
-
-    if (when.tm_mon == -1)
-      when.tm_mon = 0;
-
-    if (when.tm_mday == -1)
-      when.tm_mday = 1;
-
-    *result = std::mktime(&when);
-
-    return true;
+  for (const char ** f = DateTime::formats; *f; f++) {
+    std::memset(result, INT_MAX, sizeof(struct std::tm));
+    if (strptime(date_str, *f, result))
+      return true;
   }
-
-  inline bool quick_parse_date(const char * date_str, std::time_t * result)
-  {
-    return parse_date(date_str, result, Date::current_year + 1900);
-  }
+  return false;
 }
 
-Date::Date(const std::string& _when)
+bool DateTime::parse_date(const char * date_str, std::time_t * result, const int year)
 {
-  if (! quick_parse_date(_when.c_str(), &when))
-    throw Exception(std::string("Invalid date string: ") + _when);
+  struct std::tm secs;
+
+  if (! parse_date_mask(date_str, &secs))
+    return false;
+
+  secs.tm_hour = 0;
+  secs.tm_min  = 0;
+  secs.tm_sec  = 0;
+
+  if (secs.tm_year == -1)
+    secs.tm_year = ((year == -1) ? DateTime::current_year : (year - 1900));
+
+  if (secs.tm_mon == -1)
+    secs.tm_mon = 0;
+
+  if (secs.tm_mday == -1)
+    secs.tm_mday = 1;
+
+  *result = std::mktime(&secs);
+
+  return true;
 }
 
 inline char peek_next_nonws(std::istream& in) {
@@ -158,26 +143,21 @@ inline char peek_next_nonws(std::istream& in) {
   *_p = '\0';								\
 }
 
-void Date::parse(std::istream& in)
+DateTime::DateTime(const std::string& _secs)
+{
+  std::istringstream datestr(_secs);
+  parse(datestr);		// parse both the date and optional time
+}
+
+void DateTime::parse(std::istream& in)
 {
   char buf[256];
   char c = peek_next_nonws(in);
   READ_INTO(in, buf, 255, c,
 	    std::isalnum(c) || c == '-' || c == '.' || c == '/');
 
-  if (! quick_parse_date(buf, &when))
+  if (! quick_parse_date(buf, &secs))
     throw Exception(std::string("Invalid date string: ") + buf);
-}
-
-DateTime::DateTime(const std::string& _when)
-{
-  std::istringstream datestr(_when);
-  parse(datestr);		// parse both the date and optional time
-}
-
-void DateTime::parse(std::istream& in)
-{
-  Date::parse(in);		// first grab the date part
 
   istream_pos_type beg_pos = in.tellg();
 
@@ -187,8 +167,7 @@ void DateTime::parse(std::istream& in)
 
   // Now look for the (optional) time specifier.  If no time is given,
   // we use midnight of the given day.
-  char buf[256];
-  char c = peek_next_nonws(in);
+  c = peek_next_nonws(in);
   if (! std::isdigit(c))
     goto abort;
   READ_INTO(in, buf, 255, c, std::isdigit(c));
@@ -240,14 +219,14 @@ void DateTime::parse(std::istream& in)
       in.get(c);
   }
 
-  struct std::tm * desc = std::localtime(&when);
+  struct std::tm * desc = std::localtime(&secs);
 
   desc->tm_hour  = hour;
   desc->tm_min   = min;
   desc->tm_sec   = sec;
   desc->tm_isdst = -1;
 
-  when = std::mktime(desc);
+  secs = std::mktime(desc);
 
   return;			// the time has been successfully parsed
 
@@ -259,12 +238,12 @@ void DateTime::parse(std::istream& in)
 std::ostream& operator<<(std::ostream& out, const DateTime& moment)
 {
   std::string format = DateTime::output_format;
-  std::tm * when = moment.localtime();
-  if (when->tm_hour != 0 || when->tm_min != 0 || when->tm_sec != 0)
+  std::tm * secs = moment.localtime();
+  if (secs->tm_hour != 0 || secs->tm_min != 0 || secs->tm_sec != 0)
     format += " %H:%M:%S";
 
   char buf[64];
-  std::strftime(buf, 63, format.c_str(), when);
+  std::strftime(buf, 63, format.c_str(), secs);
   out << buf;
   return out;
 }
