@@ -38,6 +38,33 @@ else
   AC_MSG_FAILURE("Could not find pcre library (set CPPFLAGS and LDFLAGS?)")
 fi
 
+# check for the boost libraries
+AC_CACHE_CHECK(
+  [if boost is available],
+  [boost_cpplib_avail],
+  [boost_save_libs=$LIBS
+   LIBS="-lboost_thread $LIBS"
+   AC_LANG_PUSH(C++)
+   AC_TRY_LINK(
+	 [#include <boost/thread/thread.hpp>
+	  #include <iostream>
+	  void hello() {
+	    std::cout << "Hello, world!" << std::endl;
+	  }],
+	 [boost::thread thrd(&hello);
+	  thrd.join();
+	  return 0],
+	 [boost_cpplib_avail=true],
+	 [boost_cpplib_avail=false])
+   AC_LANG_POP
+   LIBS=$boost_save_libs])
+if [test x$boost_cpplib_avail = xtrue ]; then
+  AM_CONDITIONAL(HAVE_BOOST, true)
+  LIBS="-lboost_thread $LIBS"
+else
+  AC_MSG_FAILURE("Could not find the boost libraries (set CPPFLAGS and LDFLAGS?)")
+fi
+
 # Check for options
 AC_ARG_ENABLE(debug,
   [  --enable-debug          Turn on debugging],

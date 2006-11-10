@@ -1,5 +1,7 @@
 #include "DataPool.h"
 
+#include <iostream>
+
 bool DebugMode = false;
 
 using namespace Attic;
