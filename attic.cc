@@ -83,7 +83,7 @@ int main(int argc, char *args[])
     case 'X':
       if (i + 1 < argc) {
 	FileInfo info(args[i + 1]);
-	if (info.FileKind() == FileInfo::File) {
+	if (info.IsRegularFile()) {
 	  std::ifstream fin(Path::ExpandPath(args[i + 1]).c_str());
 	  do {
 	    std::string s;

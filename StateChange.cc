@@ -104,7 +104,7 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
 
 	if (markedForDeletion) {
 	  Directory::CreateDirectory(targetPath.DirectoryName());
-	  File::Move(targetLocation->CurrentPath + Duplicate->FullName,
+	  File::Move(Path::Combine(targetLocation->CurrentPath, Duplicate->FullName),
 		     targetPath);
 	  out << "m ";
 	  break;
@@ -112,7 +112,7 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
 	  // jww (2006-11-09): Do this through the broker, since it
 	  // must happen remotely
 	  Directory::CreateDirectory(targetPath.DirectoryName());
-	  File::Copy(targetLocation->CurrentPath + Duplicate->FullName,
+	  File::Copy(Path::Combine(targetLocation->CurrentPath, Duplicate->FullName),
 		     targetPath);
 	  out << "u ";
 	  break;

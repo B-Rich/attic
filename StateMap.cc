@@ -20,7 +20,7 @@ void StateMap::RegisterChecksums(FileInfo * entry)
       (*i).second.push_back(entry);
     }
   }
-  else if (entry->IsDirectory() || entry->IsCollection()) {
+  else if (entry->IsDirectory()) {
     for (FileInfo::ChildrenMap::const_iterator i = entry->ChildrenBegin();
 	 i != entry->ChildrenEnd();
 	 i++)

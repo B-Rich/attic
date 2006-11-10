@@ -32,26 +32,26 @@ namespace Attic {
 
 Path Path::Combine(const Path& first, const Path& second)
 {
-  std::string result(first);
-  if (result.length() == 0)
+  if (first.empty())
     return second;
-  else if (! second.empty() && result[result.length() - 1] != '/')
+  Path result(first);
+  if (! second.empty())
     result += '/';
   result += second;
-  return Path(result);
+  return result;
 }
 
 Path Path::ExpandPath(const Path& path)
 {
   char resolved_path[PATH_MAX];
 
-  if (path.Name.length() == 0 || path.Name[0] != '~')
+  if (path.length() == 0 || path[0] != '~')
     return Path(realpath(path.c_str(), resolved_path));
 
   const char * pfx = NULL;
-  std::string::size_type pos = path.Name.find_first_of('/');
+  std::string::size_type pos = path.find_first_of('/');
 
-  if (path.Name.length() == 1 || pos == 1) {
+  if (path.length() == 1 || pos == 1) {
     pfx = std::getenv("HOME");
 #ifdef HAVE_GETPWUID
     if (! pfx) {
@@ -64,7 +64,7 @@ Path Path::ExpandPath(const Path& path)
   }
 #ifdef HAVE_GETPWNAM
   else {
-    std::string user(path.Name, 1, pos == std::string::npos ?
+    std::string user(path, 1, pos == std::string::npos ?
 		     std::string::npos : pos - 1);
     struct passwd * pw = getpwnam(user.c_str());
     if (pw)
@@ -80,8 +80,7 @@ Path Path::ExpandPath(const Path& path)
   if (pos == std::string::npos)
     return Path(realpath(pfx, resolved_path));
 
-  return Path(realpath(Combine(Path(pfx),
-			       Path(path.Name.substr(pos + 1)).c_str()).c_str(),
+  return Path(realpath(Combine(pfx, path.substr(pos + 1)).c_str(),
 		       resolved_path));
 }
 
@@ -120,7 +119,6 @@ std::ostream& operator<<(std::ostream& out, const md5sum_t& md5) {
 void File::Copy(const Path& path, const Path& dest)
 {
   assert(File::Exists(path));
-  assert(! File::Exists(dest));
 
   std::ifstream fin(path.c_str());
   std::ofstream fout(dest.c_str());
@@ -137,39 +135,17 @@ void File::Copy(const Path& path, const Path& dest)
   assert(File::Exists(dest));
 }
 
-FileInfo::FileInfo(Location * _Repository)
-  : Repository(_Repository), fileKind(Collection),
-    Parent(NULL), Children(NULL)
+void FileInfo::dostat() const
 {
-  flags = FILEINFO_DIDSTAT;
+  if (lstat(Pathname.c_str(), &info) == -1) {
+    if (errno == ENOENT) {
+      flags |= FILEINFO_DIDSTAT;
+      return;
+    }
+    throw Exception("Failed to stat '" + Pathname + "'");
+  }
+  flags |= FILEINFO_DIDSTAT | FILEINFO_EXISTS;
 }
-
-FileInfo::FileInfo(const Path& _FullName, FileInfo * _Parent,
-		   Location * _Repository)
-  : Repository(_Repository), Parent(_Parent), Children(NULL)
-{
-  SetPath(_FullName);
-
-  if (Parent)
-    Parent->AddChild(this);
-}
-
-#if 0
-FileInfo::FileInfo(const FileInfo& other) : Children(NULL)
-{
-  flags = other.flags;
-  if (flags & FILEINFO_DIDSTAT)
-    std::memcpy(&info, &other.info, sizeof(struct stat));
-  if (flags & FILEINFO_READCSUM)
-    csum = other.csum;
-
-  fileKind   = other.fileKind;
-  Name	     = other.Name;
-  FullName   = other.FullName;
-  Repository = other.Repository;
-  Pathname   = other.Pathname;
-}
-#endif
 
 FileInfo::~FileInfo()
 {
@@ -192,34 +168,6 @@ void FileInfo::SetPath(const Path& _FullName)
     Pathname = FullName;
 
   Reset();
-}
-
-void FileInfo::dostat() const
-{
-  if (lstat(Pathname.c_str(), &info) == -1 && errno == ENOENT) {
-    fileKind = Nonexistant;
-    return;
-  }
-
-  flags |= FILEINFO_DIDSTAT;
-
-  switch (info.st_mode & S_IFMT) {
-  case S_IFDIR:
-    fileKind = Directory;
-    break;
-
-  case S_IFREG:
-    fileKind = File;
-    break;
-
-  case S_IFLNK:
-    fileKind = SymbolicLink;
-    break;
-
-  default:
-    fileKind = Special;
-    break;
-  }
 }
 
 void FileInfo::GetFileInfos(ChildrenMap& store) const
@@ -245,8 +193,8 @@ void FileInfo::GetFileInfos(ChildrenMap& store) const
 
 int FileInfo::ChildrenSize() const
 {
-  if (FileKind() != Directory && FileKind() != Collection)
-    throw Exception("Attempt to call ChildrenSize on a non-collection");
+  if (! IsDirectory())
+    throw Exception("Attempt to call ChildrenSize on a non-directory");
 
   if (! Children) {
     Children = new ChildrenMap;
@@ -257,8 +205,8 @@ int FileInfo::ChildrenSize() const
 
 FileInfo::ChildrenMap::iterator FileInfo::ChildrenBegin() const
 {
-  if (FileKind() != Directory && FileKind() != Collection)
-    throw Exception("Attempt to call ChildrenBegin on a non-collection");
+  if (! IsDirectory())
+    throw Exception("Attempt to call ChildrenBegin on a non-directory");
 
   if (! Children) {
     Children = new ChildrenMap;
@@ -320,16 +268,16 @@ FileInfo * FileInfo::FindMember(const Path& path)
   FileInfo * current = this;
 
   std::string::size_type previ = 0;
-  for (std::string::size_type index = path.Name.find('/', previ);
+  for (std::string::size_type index = path.find('/', previ);
        index != std::string::npos;
-       previ = index + 1, index = path.Name.find('/', previ)) {
-    std::string part(path.Name, previ, index - previ);
+       previ = index + 1, index = path.find('/', previ)) {
+    std::string part(path, previ, index - previ);
     current = current->FindChild(part);
     if (! current)
       return NULL;
   }
 
-  return current->FindChild(std::string(path.Name, previ));
+  return current->FindChild(std::string(path, previ));
 }
 
 FileInfo * FileInfo::FindOrCreateMember(const Path& path)
@@ -340,38 +288,37 @@ FileInfo * FileInfo::FindOrCreateMember(const Path& path)
   FileInfo * current = this;
 
   std::string::size_type previ = 0;
-  for (std::string::size_type index = path.Name.find('/', previ);
+  for (std::string::size_type index = path.find('/', previ);
        index != std::string::npos;
-       previ = index + 1, index = path.Name.find('/', previ)) {
-    std::string part(path.Name, previ, index - previ);
+       previ = index + 1, index = path.find('/', previ)) {
+    std::string part(path, previ, index - previ);
     current = current->FindOrCreateChild(part);
   }
 
-  return current->FindOrCreateChild(std::string(path.Name, previ));
+  return current->FindOrCreateChild(std::string(path, previ));
 }
 
 void FileInfo::CopyDetails(FileInfo& dest, bool dataOnly)
 {
-  dest.flags |= FILEINFO_DIDSTAT;
-
-  dest.fileKind = FileKind();
+  dest.flags	    = flags;
   dest.info.st_mode = info.st_mode;
-
-  dest.Length() = Length();
+  dest.Length()	    = Length();
 
   if (IsRegularFile() &&
-      (dataOnly || flags & FILEINFO_READCSUM)) {
+      (dataOnly || flags & FILEINFO_READCSUM))
     dest.csum  = Checksum();
-    dest.flags |= FILEINFO_READCSUM;
-  }
 }
 
 void FileInfo::CopyAttributes(FileInfo& dest, bool dataOnly)
 {
   dest.flags |= FILEINFO_DIDSTAT;
 
-  if (! dataOnly)
-    File::SetOwnership(dest.Pathname, Permissions(), OwnerId(), GroupId());
+  if (! dataOnly) {
+    File::SetPermissions(dest.Pathname, Permissions());
+    File::SetOwnership(dest.Pathname, OwnerId(), GroupId());
+  }
+
+  dest.SetPermissions(Permissions());
 
   dest.OwnerId() = OwnerId();
   dest.GroupId() = GroupId();
@@ -385,15 +332,17 @@ void FileInfo::CopyAttributes(FileInfo& dest, bool dataOnly)
 
 void FileInfo::CopyAttributes(const Path& dest)
 {
-  File::SetOwnership(dest, Permissions(), OwnerId(), GroupId());
+  File::SetPermissions(dest, Permissions());
+  File::SetOwnership(dest, OwnerId(), GroupId());
   File::SetAccessTimes(dest, LastAccessTime(), LastWriteTime());
 }
 
-md5sum_t& FileInfo::Checksum()
+md5sum_t& FileInfo::Checksum() const
 {
+#if 0
   if (! IsRegularFile() || ! Exists())
     throw Exception("Attempt to calc checksum of non-file '" + Pathname + "'");
-
+#endif
   if (! (flags & FILEINFO_READCSUM)) {
     md5sum_t::checksum(Pathname, csum);
     flags |= FILEINFO_READCSUM;
@@ -411,6 +360,12 @@ md5sum_t FileInfo::CurrentChecksum() const
   return sum;
 }
 
+FileInfo FileInfo::Directory() const
+{
+  return FileInfo(FullName.DirectoryName(), Parent ? Parent->Parent : NULL,
+		  Repository);
+}
+
 FileInfo FileInfo::LinkReference() const
 {
   if (! IsSymbolicLink())
@@ -425,9 +380,9 @@ FileInfo FileInfo::LinkReference() const
 
 void FileInfo::CreateDirectory()
 {
-  int index = Pathname.Name.rfind('/');
+  int index = Pathname.rfind('/');
   if (index != std::string::npos)
-    Directory::CreateDirectory(std::string(Pathname.Name, 0, index));
+    Directory::CreateDirectory(std::string(Pathname, 0, index));
 }
 
 void FileInfo::Delete()
@@ -441,61 +396,66 @@ void FileInfo::Delete()
   } else {
     File::Delete(FullName);
   }
+  flags &= ~FILEINFO_EXISTS;
+}
+
+void FileInfo::Copy(const Path& dest)
+{
+  if (IsRegularFile()) {
+    File::Copy(Pathname, dest);
+  }
+  else if (IsDirectory()) {
+    Directory::CreateDirectory(dest);
+
+    for (ChildrenMap::iterator i = ChildrenBegin();
+	 i != ChildrenEnd();
+	 i++) {
+      assert((*i).first == (*i).second->Name);
+      (*i).second->Copy(Path::Combine(dest, (*i).first));
+    }
+  }
+}
+
+void FileInfo::Move(const Path& dest)
+{
+  File::Move(Pathname, dest);
 }
 
 FileInfo * FileInfo::ReadFrom(char *& data, FileInfo * parent,
 			      Location * repository)
 {
-  FileInfo * info = NULL;
+  FileInfo * entry = NULL;
 
-  int kind;
-  read_binary_long(data, kind);
-  Kind fileKind = static_cast<FileInfo::Kind>(kind);
-  assert(fileKind < FileInfo::Last);
+  unsigned char flags;
+  read_binary_number(data, flags);
 
-  if (kind != FileInfo::Collection) {
+  if (! (flags & FILEINFO_VIRTUAL)) {
     Path name;
-    read_binary_string(data, name.Name);
+    read_binary_string(data, name);
 
     if (parent)
-      name = parent->FullName + name;
+      name = Path::Combine(parent->FullName, name);
 
-    info = new FileInfo(name, parent, repository);
-    info->fileKind = fileKind;
+    entry = new FileInfo(name, parent, repository);
+    entry->flags = flags;
 
-    if (fileKind != FileInfo::Nonexistant) {
-      info->flags |= FILEINFO_DIDSTAT;
-
-      read_binary_number(data, info->LastAccessTime());
-      read_binary_number(data, info->LastWriteTime());
-
-      mode_t mode;
-      read_binary_number(data, mode);
-      info->SetPermissions(mode);
-
-      read_binary_number(data, info->OwnerId());
-      read_binary_number(data, info->GroupId());
-
-      if (kind == FileInfo::File) {
-	read_binary_long(data, info->Length());
-
-	info->flags |= FILEINFO_READCSUM;
-	read_binary_number(data, info->Checksum());
-      }
-    }
+    if (flags & FILEINFO_DIDSTAT && flags & FILEINFO_EXISTS)
+      read_binary_number(data, entry->info);
+    if (flags & FILEINFO_READCSUM)
+      read_binary_number(data, entry->csum);
   } else {
     assert(! parent);
-    info = new FileInfo(repository);
-    assert(info->fileKind == fileKind);
+    entry = new FileInfo(repository);
+    entry->flags = flags;
   }
 
-  if (fileKind == FileInfo::Collection ||
-      fileKind == FileInfo::Directory) {
+  if (flags & FILEINFO_DIDSTAT && flags & FILEINFO_EXISTS &&
+      (entry->info.st_mode & S_IFMT) == S_IFDIR) {
     int children = read_binary_long<int>(data);
     for (int i = 0; i < children; i++)
-      ReadFrom(data, info, repository);
+      ReadFrom(data, entry, repository);
   }
-  return info;
+  return entry;
 }
 
 void FileInfo::DumpTo(std::ostream& out, int depth)
@@ -503,29 +463,25 @@ void FileInfo::DumpTo(std::ostream& out, int depth)
   for (int i = 0; i < depth; i++)
     out << "  ";
 
-  switch (FileKind()) {
-  case Collection:   out << "COL: "; break;
-  case Directory:    out << "DIR: "; break;
-  case File:         out << "FIL: "; break;
-  case SymbolicLink: out << "SYM: "; break;
-  case Special:      out << "SPC: "; break;
-  case Nonexistant:  out << "NON: "; break;
-  default:
-    assert(0);
-    break;
-  }
+  if (IsDirectory())
+    out << "DIR: ";
+  else if (IsRegularFile())
+    out << "FIL: ";
+  else if (IsSymbolicLink())
+    out << "SYM: ";
+  else if (Exists())
+    out << "SPC: ";
+  else
+    out << "NON: ";
 
   out << FullName;
 
-  if (IsRegularFile())
+  if (IsRegularFile()) {
     out << " len " << Length();
-
-  if (FileKind() != Collection &&
-      FileKind() != Nonexistant)
-    out << " mod " << DateTime(LastWriteTime().tv_sec);
-
-  if (IsRegularFile())
     out << " csum " << Checksum();
+  }
+  if (Exists())
+    out << " mod " << DateTime(LastWriteTime().tv_sec);
 
   out << std::endl;
 
@@ -538,29 +494,17 @@ void FileInfo::DumpTo(std::ostream& out, int depth)
 
 void FileInfo::WriteTo(std::ostream& out)
 {
-  FileInfo::Kind fileKind = FileKind();
+  write_binary_number(out, flags);
 
-  write_binary_long(out, static_cast<int>(fileKind));
-
-  if (fileKind != FileInfo::Collection) {
+  if (! IsVirtual()) {
     write_binary_string(out, Name);
-
-    if (fileKind != FileInfo::Nonexistant) {
-      write_binary_number(out, LastAccessTime());
-      write_binary_number(out, LastWriteTime());
-      write_binary_number(out, Permissions());
-      write_binary_number(out, OwnerId());
-      write_binary_number(out, GroupId());
-
-      if (fileKind == FileInfo::File) {
-	write_binary_long(out, Length());
-	write_binary_number(out, Checksum());
-      }
-    }
+    if (Exists())
+      write_binary_number(out, info);
+    if (IsRegularFile())
+      write_binary_number(out, Checksum());
   }
 
-  if (fileKind == FileInfo::Collection ||
-      fileKind == FileInfo::Directory) {
+  if (Exists() && IsDirectory()) {
     write_binary_long(out, (int)ChildrenSize());
     for (ChildrenMap::iterator i = ChildrenBegin();
 	 i != ChildrenEnd();
@@ -588,7 +532,7 @@ void FileInfo::PostRemoveChange(const std::string& childName,
 				StateChangesMap& changesMap)
 {
   FileInfo * missingChild =
-    new FileInfo(FullName + childName, this, Repository);
+    new FileInfo(Path::Combine(FullName, childName), this, Repository);
 
   if (ancestorChild->IsDirectory() && ancestorChild->Children)
     for (FileInfo::ChildrenMap::const_iterator
@@ -621,19 +565,17 @@ void FileInfo::CompareTo(FileInfo * ancestor, StateChangesMap& changesMap)
     return;
   }
 
-  FileInfo::Kind fileKind = FileKind();
-
-  if (fileKind != FileInfo::Collection && Name != ancestor->Name)
+  if (! IsVirtual() && Name != ancestor->Name)
     throw Exception("Names do not match in comparison: " +
 		    FullName + " != " + ancestor->Name);
 
   bool updateRegistered = false;
 
-  if (fileKind != ancestor->FileKind()) {
+  if (FileKind() != ancestor->FileKind()) {
     PostUpdateChange(ancestor, changesMap);
     updateRegistered = true;
   }
-  else if (fileKind == FileInfo::File) {
+  else if (IsRegularFile()) {
     if (Length() != ancestor->Length()) {
       PostUpdateChange(ancestor, changesMap);
       updateRegistered = true;
@@ -647,23 +589,18 @@ void FileInfo::CompareTo(FileInfo * ancestor, StateChangesMap& changesMap)
       }
     }
   }
-  else if (fileKind != FileInfo::Collection &&
-	   fileKind != FileInfo::Nonexistant &&
-	   LastWriteTime() != ancestor->LastWriteTime()) {
+  else if (Exists() && LastWriteTime() != ancestor->LastWriteTime()) {
     PostUpdatePropsChange(ancestor, changesMap);
     updateRegistered = true;
   }
 
-  if (! updateRegistered &&
-      fileKind != FileInfo::Collection &&
-      fileKind != FileInfo::Nonexistant &&
+  if (! updateRegistered && Exists() &&
       (Permissions() != ancestor->Permissions() ||
        OwnerId()     != ancestor->OwnerId()	||
        GroupId()     != ancestor->GroupId()))
     PostUpdatePropsChange(ancestor, changesMap);
 
-  if (fileKind != FileInfo::Collection &&
-      fileKind != FileInfo::Directory)
+  if (! IsDirectory())
     return;
 
   bool updateProps = false;
@@ -695,6 +632,18 @@ void FileInfo::CompareTo(FileInfo * ancestor, StateChangesMap& changesMap)
 
   if (updateProps && ! updateRegistered)
     PostUpdatePropsChange(ancestor, changesMap);
+}
+
+void Directory::CreateDirectory(const Path& path)
+{
+  const char * b = path.c_str();
+  const char * p = b + 1;
+  while (*p) {
+    if (*p == '/')
+      CreateDirectory(FileInfo(std::string(path, 0, p - b)));
+    ++p;
+  }
+  CreateDirectory(FileInfo(path));
 }
 
 } // namespace Attic

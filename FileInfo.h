@@ -14,94 +14,61 @@
 
 namespace Attic {
 
-class Path
+class Path : public std::string
 {
 public:
-  std::string Name;
-
   Path() {}
-  Path(const char * _Name) : Name(_Name) {}
-  Path(const std::string& _Name) : Name(_Name) {}
-  Path(const Path& other) : Name(other.Name) {}
+  Path(const char * name) : std::string(name) {}
+  Path(const std::string& name) : std::string(name) {}
 
-  Path& operator=(const Path& other) {
-    Name = other.Name;
-  }
-  
   static Path ExpandPath(const Path& path);
+  static Path Combine(const Path& first, const Path& second);
 
-  static int Parts(const Path& path)
-  {
-    int len = path.Name.length();
-    int count = 1;
-    for (int i = 0; i < len; i++)
-      if (path.Name[i] == '/')
-	count++;
-    return count;
+#if 0
+  Path& operator+=(const Path& other) {
+    *this = Combine(*this, other);
+    return *this;
   }
+#endif
 
   static std::string GetFileName(const Path& path)
   {
-    int index = path.Name.rfind('/');
+    int index = path.rfind('/');
     if (index != std::string::npos)
-      return path.Name.substr(index + 1);
+      return path.substr(index + 1);
     else      
       return path;
   }
 
+  std::string FileName() const {
+    return GetFileName(*this);
+  }
+
   static Path GetDirectoryName(const Path& path)
   {
-    int index = path.Name.rfind('/');
+    int index = path.rfind('/');
     if (index != std::string::npos)
-      return path.Name.substr(0, index);
+      return path.substr(0, index);
     else      
-      return Path("");
-  }
-
-  static Path Combine(const Path& first, const Path& second);
-
-  operator std::string() const {
-    return Name;
-  }
-  const char * c_str() const {
-    return Name.c_str();
-  }
-
-  bool operator==(const Path& other) const {
-    return Name == other.Name;
-  }
-  bool operator!=(const Path& other) const {
-    return ! (*this == other);
-  }
-  Path& operator+=(const Path& other) {
-    Name = Combine(Name, other.Name);
-  }
-
-  bool empty() const {
-    return Name.empty();
-  }
-
-  std::string FileName() const {
-    return GetFileName(Name);
+      return "";
   }
 
   Path DirectoryName() const {
-    return Path(GetDirectoryName(Name));
+    return GetDirectoryName(*this);
   }
+
+#if 0
+  static int PartsCount(const Path& path)
+  {
+    int len = path.length();
+    int count = 1;
+    for (int i = 0; i < len; i++)
+      if (path[i] == '/')
+	count++;
+    return count;
+  }
+#endif
 };
-
-inline Path operator+(const Path& left, const Path& right) {
-  return Path::Combine(left, right);
-}
-
-inline bool operator<(const Path& left, const Path& right) {
-  return left.Name < right.Name;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Path& path) {
-  out << path.Name;
-  return out;
-}
 
 class md5sum_t
 {
@@ -127,60 +94,65 @@ public:
 #define FILEINFO_DIDSTAT  0x01
 #define FILEINFO_READCSUM 0x02
 #define FILEINFO_HANDLED  0x04
+#define FILEINFO_VIRTUAL  0x08
+#define FILEINFO_EXISTS   0x10
 
 class Location;
 class FileInfo
 {
-  mutable struct stat info;
-
 public:
+  typedef std::map<std::string, FileInfo *>  ChildrenMap;
+  typedef std::pair<std::string, FileInfo *> ChildrenPair;
+
+private:
   mutable unsigned char flags;
-
-  enum Kind {
-    Collection, Directory, File, SymbolicLink, Special, Nonexistant, Last
-  };
-
-  std::string Name;
-  Path	      FullName;
-  Location *  Repository;
-  Path	      Pathname;
-
-  FileInfo(Location * _Repository = NULL);
-  FileInfo(const Path& _FullName, FileInfo * _Parent = NULL,
-	   Location * _Repository = NULL);
-#if 0
-  FileInfo(const FileInfo& other);
-#endif
-  ~FileInfo();
-
-  void SetPath(const Path& _FullName);
-
-  mutable Kind fileKind;
+  mutable struct stat	info;
+  mutable md5sum_t	csum;
+  mutable ChildrenMap * Children; // This is dynamically generated on-demand
 
   void dostat() const;
 
 public:
-  void Reset() {
-    fileKind = Nonexistant;
-    flags    = FILEINFO_NOFLAGS;
+  std::string Name;
+  Path	      FullName;		// This is computed during load/read
+  Location *  Repository;
+  Path	      Pathname;		// cache of Repository->CurrentPath + FullName
+  FileInfo *  Parent;		// This is computed during load/read
+
+public:
+  FileInfo(Location * _Repository = NULL)
+    : flags(FILEINFO_DIDSTAT | FILEINFO_VIRTUAL),
+      Repository(_Repository), Parent(NULL), Children(NULL) {
+    info.st_mode |= S_IFDIR;
   }
 
-  Kind FileKind() const {
-    if (! (flags & FILEINFO_DIDSTAT)) dostat();
-    return fileKind;
+  FileInfo::FileInfo(const Path& _FullName, FileInfo * _Parent = NULL,
+		     Location * _Repository = NULL)
+    : flags(FILEINFO_NOFLAGS),
+      Repository(_Repository), Parent(_Parent), Children(NULL) {
+    SetPath(_FullName);
+    if (Parent) Parent->AddChild(this);
+  }
+
+  ~FileInfo();
+
+  void SetPath(const Path& _FullName);
+  void Reset() {
+    flags = FILEINFO_NOFLAGS;
   }
 
   bool Exists() const {
-    return FileKind() != Nonexistant;
+    if (! (flags & FILEINFO_DIDSTAT)) dostat();
+    return flags & FILEINFO_EXISTS;
   }
 
-  off_t& Length() {
+  off_t& Length() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     assert(Exists());
     return info.st_size;
   }
 
-  mode_t Permissions() {
+  mode_t Permissions() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return info.st_mode & ~S_IFMT;
   }    
@@ -189,61 +161,59 @@ public:
     info.st_mode = (((info.st_mode & S_IFMT) | mode) |
 		    info.st_mode & ~S_IFMT);
   }    
-  uid_t& OwnerId() {
+
+  uid_t& OwnerId() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return info.st_uid;
   }    
-  gid_t& GroupId() {
+  gid_t& GroupId() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return info.st_gid;
   }    
 
-  struct timespec& LastWriteTime() {
+  struct timespec& LastWriteTime() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return info.st_mtimespec;
   }
-  struct timespec& LastAccessTime() {
+  struct timespec& LastAccessTime() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return info.st_atimespec;
   }
 
-  bool IsDirectory() const {
-    return FileKind() == Directory;
+  int FileKind() const {
+    if (! (flags & FILEINFO_DIDSTAT)) dostat();
+    return info.st_mode & S_IFMT;
   }
-  bool IsCollection() const {
-    return FileKind() == Collection;
+
+  bool IsVirtual() const {
+    return flags & FILEINFO_VIRTUAL;
+  }
+  bool IsDirectory() const {
+    if (! (flags & FILEINFO_DIDSTAT)) dostat();
+    return (info.st_mode & S_IFMT) == S_IFDIR;
   }
   bool IsSymbolicLink() const {
-    return FileKind() == SymbolicLink;
+    if (! (flags & FILEINFO_DIDSTAT)) dostat();
+    return (info.st_mode & S_IFMT) == S_IFLNK;
   }
   bool IsRegularFile() const {
-    return FileKind() == File;
+    if (! (flags & FILEINFO_DIDSTAT)) dostat();
+    return (info.st_mode & S_IFMT) == S_IFREG;
   }
 
-  void CopyDetails(FileInfo& dest, bool dataOnly = false);
-  void CopyAttributes(FileInfo& dest, bool dataOnly = false);
-  void CopyAttributes(const Path& dest);
-
-private:
-  mutable md5sum_t csum;
-
-public:
-  md5sum_t& Checksum();
+  md5sum_t& Checksum() const;
   md5sum_t  CurrentChecksum() const;
+  FileInfo  Directory() const;
   FileInfo  LinkReference() const;
-
-  void CreateDirectory();
-  void Delete();
-
-  typedef std::map<std::string, FileInfo *>  ChildrenMap;
-  typedef std::pair<std::string, FileInfo *> ChildrenPair;
-
-  void GetFileInfos(ChildrenMap& store) const;
-
-  mutable FileInfo *	Parent;
-  mutable ChildrenMap * Children;
-
-  int ChildrenSize() const;
+  void	    CreateDirectory();
+  void	    Delete();
+  void	    Copy(const Path& dest);
+  void	    Move(const Path& dest);
+  void	    CopyDetails(FileInfo& dest, bool dataOnly = false);
+  void	    CopyAttributes(FileInfo& dest, bool dataOnly = false);
+  void	    CopyAttributes(const Path& dest);
+  void      GetFileInfos(ChildrenMap& store) const;
+  int	    ChildrenSize() const;
 
   ChildrenMap::iterator ChildrenBegin() const;
   ChildrenMap::iterator ChildrenEnd() const {
@@ -255,8 +225,8 @@ public:
   FileInfo * CreateChild(const std::string& name);
   void       DestroyChild(FileInfo * child);
   FileInfo * FindChild(const std::string& name);
-  FileInfo * FindOrCreateChild(const std::string& name)
-  {
+
+  FileInfo * FindOrCreateChild(const std::string& name) {
     FileInfo * child = FindChild(name);
     if (child == NULL)
       child = CreateChild(name);
@@ -285,29 +255,28 @@ class File
 {
 public:
   static bool Exists(const Path& path) {
-    FileInfo info(path);
-    return info.Exists();
+    return FileInfo(path).Exists();
   }
 
   static void Delete(const Path& path) {
     if (unlink(path.c_str()) == -1)
-      throw Exception("Failed to delete '" + path.Name + "'");
+      throw Exception("Failed to delete '" + path + "'");
   }
 
   static void Copy(const Path& path, const Path& dest);
-  static void Move(const Path& path, const Path& dest)
-  {
+  static void Move(const Path& path, const Path& dest) {
     if (rename(path.c_str(), dest.c_str()) == -1)
-      throw Exception("Failed to move '" + path.Name + "' to '" + dest.Name + "'");
+      throw Exception("Failed to move '" + path + "' to '" + dest + "'");
   }
 
-  static void SetOwnership(const Path& path,
-			   mode_t mode, uid_t uid, gid_t gid)
-  {
+  static void SetPermissions(const Path& path, mode_t mode) {
     if (chmod(path.c_str(), mode) == -1)
-      throw Exception("Failed to change permissions of '" + path.Name + "'");
+      throw Exception("Failed to change permissions of '" + path + "'");
+  }
+
+  static void SetOwnership(const Path& path, uid_t uid, gid_t gid) {
     if (chown(path.c_str(), uid, gid) == -1)
-      throw Exception("Failed to change ownership of '" + path.Name + "'");
+      throw Exception("Failed to change ownership of '" + path + "'");
   }
 
   static void SetAccessTimes(const Path& path,
@@ -319,46 +288,23 @@ public:
     TIMESPEC_TO_TIMEVAL(&temp[1], &LastWriteTime);
 
     if (utimes(path.c_str(), temp) == -1)
-      throw Exception("Failed to set last write time of '" + path.Name + "'");
+      throw Exception("Failed to set last write time of '" + path + "'");
   }
 };
 
 class Directory : public File
 {
-  static void CreateDirectory(const FileInfo& info)
-  {
+  static void CreateDirectory(const FileInfo& info) {
     if (! info.Exists())
       if (mkdir(info.Pathname.c_str(), 0755) == -1)
-	throw Exception("Failed to create directory '" + info.Pathname.Name + "'");
+	throw Exception("Failed to create directory '" + info.Pathname + "'");
   }
 
 public:
-  static void CreateDirectory(const Path& path)
-  {
-    const char * b = path.c_str();
-    const char * p = b + 1;
-    while (*p) {
-      if (*p == '/')
-	CreateDirectory(FileInfo(std::string(path, 0, p - b)));
-      ++p;
-    }
-    CreateDirectory(FileInfo(path));
-  }
-
-  static void Delete(const Path& path)
-  {
+  static void CreateDirectory(const Path& path);
+  static void Delete(const Path& path) {
     if (rmdir(path.c_str()) == -1)
-      throw Exception("Failed to remove directory '" + path.Name + "'");
-  }
-
-  static void Copy(const Path& path, const Path& dest)
-  {
-    assert(0);			// jww (2006-11-03): implement
-  }
-
-  static void Move(const Path& path, const Path& dest)
-  {
-    assert(0);			// jww (2006-11-03): implement
+      throw Exception("Failed to remove directory '" + path + "'");
   }
 };
 
