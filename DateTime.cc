@@ -219,14 +219,14 @@ void DateTime::parse(std::istream& in)
       in.get(c);
   }
 
-  struct std::tm * desc = std::localtime(&secs);
+  { struct std::tm * desc = std::localtime(&secs);
 
-  desc->tm_hour  = hour;
-  desc->tm_min   = min;
-  desc->tm_sec   = sec;
-  desc->tm_isdst = -1;
-
-  secs = std::mktime(desc);
+    desc->tm_hour  = hour;
+    desc->tm_min   = min;
+    desc->tm_sec   = sec;
+    desc->tm_isdst = -1;
+    
+    secs = std::mktime(desc); }
 
   return;			// the time has been successfully parsed
 

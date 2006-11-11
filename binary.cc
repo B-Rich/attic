@@ -1,5 +1,7 @@
 #include "binary.h"
 
+#include <assert.h>
+
 void read_binary_string(char *& data, std::string& str)
 {
   read_binary_guard(data, 0x3001);

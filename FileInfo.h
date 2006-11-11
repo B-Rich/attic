@@ -7,6 +7,7 @@
 #include <map>
 
 #include <sys/stat.h>
+#include <assert.h>
 
 #include "error.h"
 #include "md5.h"

@@ -20,6 +20,26 @@ AM_PATH_LISPDIR
 AC_STDC_HEADERS
 AC_HAVE_HEADERS(sys/stat.h)
 
+# Checking if dirent supports d_namlen
+AC_MSG_CHECKING(if dirent supports d_namlen)
+AC_LANG_PUSH(C++)
+AC_COMPILE_IFELSE(
+  [#include <dirent.h>
+   struct dirent dirinfo;
+   void foo(int) {}
+   void bar() {
+     foo(dirinfo.d_namlen);
+   }],
+  [dirent_uses_d_namlen=true],
+  [dirent_uses_d_namlen=false])
+AC_LANG_POP
+if [test x$dirent_uses_d_namlen = xtrue ]; then
+  AC_DEFINE(DIRENT_HAS_D_NAMLEN, [], [dirent uses d_namlen])
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+
 # Checking for which kind of stat time support we have
 AC_MSG_CHECKING(time format used by stat(2))
 

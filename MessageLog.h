@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <assert.h>
+
 namespace Attic {
 
 class MessageLog

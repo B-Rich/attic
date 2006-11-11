@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <cstdlib>
+#include <cstring>
 #if defined(HAVE_GETPWUID) || defined(HAVE_GETPWNAM)
 #include <pwd.h>
 #endif
@@ -171,9 +172,13 @@ void FileInfo::GetFileInfos(ChildrenMap& store) const
 
   struct dirent * dp;
   while ((dp = readdir(dirp)) != NULL) {
+#ifdef DIRENT_HAS_D_NAMLEN
+    int len = dp->d_namlen;
+#else
+    int len = std::strlen(dp->d_name);
+#endif
     if (dp->d_name[0] == '.' &&
-	(dp->d_namlen == 1 ||
-	 (dp->d_namlen == 2 && dp->d_name[1] == '.')))
+	(len == 1 || (len == 2 && dp->d_name[1] == '.')))
       continue;
 
     // This gets added to the parent upon construction
