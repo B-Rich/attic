@@ -18,15 +18,22 @@ fi
 autoconf
 
 INCDIRS="-I/sw/include -I/usr/local/include"
-INCDIRS="$INCDIRS -Wno-long-double"
-
 LIBDIRS="-L/sw/lib -L/usr/local/lib"
-
 SWITCHES="--disable-shared"
+
+SYSTEM=`uname -a`
+if [ $SYSTEM = Linux ]; then
+    CXXFLAGS="-pthread"
+elif [ $SYSTEM = Linux ]; then
+    CXXFLAGS="-Wno-long-double"
+else
+    CXXFLAGS=""
+fi
 
 if [ "$1" = "--debug" ]; then
     shift 1
-    ./configure CPPFLAGS="$INCDIRS" LDFLAGS="$LIBDIRS" CXXFLAGS="-g" $SWITCHES
+    ./configure CPPFLAGS="$INCDIRS" LDFLAGS="$LIBDIRS" \
+	CXXFLAGS="$CXXFLAGS -g" $SWITCHES
 else
     ./configure CPPFLAGS="$INCDIRS" LDFLAGS="$LIBDIRS" $SWITCHES
 fi
