@@ -16,7 +16,88 @@ AM_PROG_LIBTOOL
 # Checks for emacs lisp path
 AM_PATH_LISPDIR
 
-# check for the boost libraries
+# Checks for header files.
+AC_STDC_HEADERS
+AC_HAVE_HEADERS(sys/stat.h)
+
+# Checking for which kind of stat time support we have
+AC_MSG_CHECKING(time format used by stat(2))
+
+AC_LANG_PUSH(C++)
+AC_COMPILE_IFELSE(
+  [#include <sys/stat.h>
+   struct stat info;
+   void foo(struct timespec&) {}
+   void bar() {
+     foo(info.st_atim);
+   }],
+  [stat_uses_st_atim=true],
+  [stat_uses_st_atim=false])
+AC_LANG_POP
+if [test x$stat_uses_st_atim = xtrue ]; then
+  AC_DEFINE(STAT_USES_ST_ATIM, [], [st_atim])
+  AC_MSG_RESULT(st_atim)
+fi
+
+if [test x$stat_uses_st_atim = xfalse ]; then
+  AC_LANG_PUSH(C++)
+  AC_COMPILE_IFELSE(
+    [#include <sys/stat.h>
+     struct stat info;
+     void foo(struct timespec&) {}
+     void bar() {
+       foo(info.st_atimespec);
+     }],
+    [stat_uses_st_atimespec=true],
+    [stat_uses_st_atimespec=false])
+  AC_LANG_POP
+  if [test x$stat_uses_st_atimespec = xtrue ]; then
+    AC_DEFINE(STAT_USES_ST_ATIMESPEC, [], [st_atimespec])
+    AC_MSG_RESULT(st_atimespec)
+  fi
+fi
+
+if [test x$stat_uses_st_atimespec = xfalse ]; then
+  AC_LANG_PUSH(C++)
+  AC_COMPILE_IFELSE(
+    [#include <sys/stat.h>
+     struct stat info;
+     void foo(time_t&, long&) {}
+     void bar() {
+       foo(info.st_atime, info.st_atimensec);
+     }],
+    [stat_uses_st_atimensec=true],
+    [stat_uses_st_atimensec=false])
+  AC_LANG_POP
+  if [test x$stat_uses_st_atimensec = xtrue ]; then
+    AC_DEFINE(STAT_USES_ST_ATIMENSEC, [], [st_atimensec])
+    AC_MSG_RESULT(st_atime + st_atimnsec)
+  fi
+fi
+
+if [test x$stat_uses_st_atimensec = xfalse ]; then
+  AC_LANG_PUSH(C++)
+  AC_COMPILE_IFELSE(
+    [#include <sys/stat.h>
+     struct stat info;
+     void foo(time_t&) {}
+     void bar() {
+       foo(info.st_atime, info.st_atime);
+     }],
+    [stat_uses_st_atime=true],
+    [stat_uses_st_atime=false])
+  AC_LANG_POP
+  if [test x$stat_uses_st_atime = xtrue ]; then
+    AC_DEFINE(STAT_USES_ST_ATIME, [], [st_atime])
+    AC_MSG_RESULT(st_atime)
+  fi
+fi
+
+if [test x$stat_uses_st_atime = xfalse ]; then
+  AC_MSG_FAILURE(unknown)
+fi
+
+# Check for the boost libraries
 AC_CACHE_CHECK(
   [if boost is available],
   [boost_cpplib_avail],
@@ -54,10 +135,6 @@ AC_ARG_ENABLE(debug,
     *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
   esac],[debug=false])
 AM_CONDITIONAL(DEBUG, test x$debug = xtrue)
-
-# Checks for header files.
-AC_STDC_HEADERS
-AC_HAVE_HEADERS(sys/stat.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

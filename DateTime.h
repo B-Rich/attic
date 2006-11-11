@@ -10,15 +10,15 @@
 class DateTime
 {
 protected:
-  std::time_t secs;
-  long	      nsecs;
-
   static const char * formats[];
   static int	      current_year;
   static std::string  input_format;
   static std::string  output_format;
 
 public:
+  std::time_t secs;
+  long	      nsecs;
+
   static DateTime Now;
 
   DateTime() {}

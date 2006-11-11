@@ -1,10 +1,13 @@
+#include "FileInfo.h"
+#include "Location.h"
+#include "StateChange.h"
+#include "binary.h"
+
 #include <fstream>
 
 #include <dirent.h>
 #include <errno.h>
 #include <cstdlib>
-#define HAVE_GETPWUID
-#define HAVE_GETPWNAM
 #if defined(HAVE_GETPWUID) || defined(HAVE_GETPWNAM)
 #include <pwd.h>
 #endif
@@ -16,12 +19,6 @@
 
 #include "md5.h"
 
-#include "FileInfo.h"
-#include "Location.h"
-#include "StateChange.h"
-#include "binary.h"
-
-#define HAVE_REALPATH
 #ifdef HAVE_REALPATH
 extern "C" char *realpath(const char *, char resolved_path[]);
 #endif

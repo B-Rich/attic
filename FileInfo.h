@@ -10,6 +10,7 @@
 
 #include "error.h"
 #include "md5.h"
+#include "acconf.h"
 
 namespace Attic {
 
@@ -208,18 +209,76 @@ public:
 
   DateTime LastWriteTime() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
+#ifdef STAT_USES_ST_ATIM
+    return DateTime(info.st_mtim);
+#else
+#ifdef STAT_USES_ST_ATIMESPEC
     return DateTime(info.st_mtimespec);
+#else
+#ifdef STAT_USES_ST_ATIMENSEC
+    return DateTime(info.st_mtime, info.st_mtimensec);
+#else
+#ifdef STAT_USES_ST_ATIME
+    return DateTime(info.st_mtime);
+#endif
+#endif
+#endif
+#endif
   }
   void SetLastWriteTime(const DateTime& when) {
+#ifdef STAT_USES_ST_ATIM
+    info.st_mtim = when;
+#else
+#ifdef STAT_USES_ST_ATIMESPEC
     info.st_mtimespec = when;
+#else
+#ifdef STAT_USES_ST_ATIMENSEC
+    info.st_mtime     = when.secs;
+    info.st_mtimensec = when.nsecs;
+#else
+#ifdef STAT_USES_ST_ATIME
+    info.st_mtime = when;
+#endif
+#endif
+#endif
+#endif
   }
 
   DateTime LastAccessTime() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
+#ifdef STAT_USES_ST_ATIM
+    return DateTime(info.st_atim);
+#else
+#ifdef STAT_USES_ST_ATIMESPEC
     return DateTime(info.st_atimespec);
+#else
+#ifdef STAT_USES_ST_ATIMENSEC
+    return DateTime(info.st_atime, info.st_atimensec);
+#else
+#ifdef STAT_USES_ST_ATIME
+    return DateTime(info.st_atime);
+#endif
+#endif
+#endif
+#endif
   }
   void SetLastAccessTime(const DateTime& when) {
+#ifdef STAT_USES_ST_ATIM
+    info.st_atim = when;
+#else
+#ifdef STAT_USES_ST_ATIMESPEC
     info.st_atimespec = when;
+#else
+#ifdef STAT_USES_ST_ATIMENSEC
+    info.st_atime     = when.secs;
+    info.st_atimensec = when.nsecs;
+#else
+#ifdef STAT_USES_ST_ATIME
+    info.st_atime = when;
+#endif
+#endif
+#endif
+#endif
   }
 
   int FileKind() const {
