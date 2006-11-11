@@ -21,10 +21,12 @@ INCDIRS="-I/sw/include -I/usr/local/include"
 LIBDIRS="-L/sw/lib -L/usr/local/lib"
 SWITCHES="--disable-shared"
 
-SYSTEM=`uname -a`
+SYSTEM=`uname -s`
 if [ $SYSTEM = Linux ]; then
     CXXFLAGS="-pthread"
-elif [ $SYSTEM = Linux ]; then
+elif [ $SYSTEM = Solaris ]; then
+    CXXFLAGS="-pthreads"
+elif [ $SYSTEM = Darwin ]; then
     CXXFLAGS="-Wno-long-double"
 else
     CXXFLAGS=""
