@@ -1,4 +1,4 @@
-#include "DataPool.h"
+#include "Manager.h"
 
 #include <iostream>
 
@@ -10,12 +10,14 @@ int main(int argc, char *args[])
 {
   try {
 
-  DataPool pool;
-  Location optionTemplate;
+  Location   optionTemplate;
+  Manager    atticManager;
+  MessageLog messageLog(std::cout);
+  DataPool * pool = atticManager.CreatePool();
 
   for (int i = 1; i < argc; i++) {
     if (args[i][0] != '-') {
-      pool.Locations.push_back(new Location(Path::ExpandPath(args[i])));
+      pool->Locations.push_back(new Location(Path::ExpandPath(args[i])));
       continue;
     }
 
@@ -63,11 +65,11 @@ int main(int argc, char *args[])
 
     case 'd':
       if (i + 1 < argc)
-	pool.LoadAncestorFromFile(Path::ExpandPath(args[++i]));
+	pool->LoadAncestorFromFile(Path::ExpandPath(args[++i]));
       break;
 
     case 'n':
-      pool.LoggingOnly = true;
+      pool->LoggingOnly = true;
       break;
 
     case 'c':
@@ -99,7 +101,7 @@ int main(int argc, char *args[])
     }
   }
 
-  if (pool.Locations.empty()) {
+  if (pool->Locations.empty()) {
     std::cout << "usage: attic <OPTIONS> [DIRECTORY ...]\n\
 \n\
 Options accepted:\n\
@@ -142,16 +144,14 @@ Update the database to reflect foo's recent changes:\n\
     return 1;
   }
 
-  for (std::vector<Location *>::iterator i = pool.Locations.begin();
-       i != pool.Locations.end();
+  for (std::vector<Location *>::iterator i = pool->Locations.begin();
+       i != pool->Locations.end();
        i++)
     (*i)->CopyOptions(optionTemplate);
   
-  pool.Locations.front()->PreserveChanges = true;
-  pool.UseAncestor();
+  pool->Locations.front()->PreserveChanges = true;
 
-  pool.ComputeChanges();
-  pool.ApplyChanges(std::cout);
+  atticManager.Start(messageLog);
 
 #if 0
   bool createdDatabase = false;

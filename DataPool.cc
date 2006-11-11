@@ -37,7 +37,7 @@ void DataPool::ResolveConflicts()
       std::cout << "There are conflicts!" << std::endl;
 }
 
-void DataPool::ApplyChanges(std::ostream& out)
+void DataPool::ApplyChanges(MessageLog& log)
 {
   if (! AllChanges)
     return;
@@ -80,12 +80,12 @@ void DataPool::ApplyChanges(std::ostream& out)
 	 j++)
       for (StateChange * ptr = *j; ptr; ptr = ptr->Next)
 	if (LoggingOnly) {
-	  ptr->Report(out);
+	  ptr->Report(log);
 	} else {
 	  StateChangesMap * changesMap = (*i)->CurrentChanges;
 	  if (! changesMap && ! (*i)->PreserveChanges)
 	    changesMap = AllChanges;
-	  ptr->Execute(out, *i, changesMap);
+	  ptr->Execute(log, *i, changesMap);
 	}
   }
 

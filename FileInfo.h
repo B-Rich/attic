@@ -150,8 +150,8 @@ public:
     info.st_mode |= S_IFDIR;
   }
 
-  FileInfo::FileInfo(const Path& _FullName, FileInfo * _Parent = NULL,
-		     Location * _Repository = NULL)
+  FileInfo(const Path& _FullName, FileInfo * _Parent = NULL,
+	   Location * _Repository = NULL)
     : FileInfoData(FILEINFO_NOFLAGS),
       Repository(_Repository), Parent(_Parent), Children(NULL) {
     SetPath(_FullName);

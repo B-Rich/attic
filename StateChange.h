@@ -1,6 +1,8 @@
 #ifndef _STATECHANGE_H
 #define _STATECHANGE_H
 
+#include "MessageLog.h"
+
 #include <string>
 #include <map>
 #include <deque>
@@ -36,11 +38,11 @@ public:
     : Next(NULL), ChangeKind(_ChangeKind),
       Item(_Item), Ancestor(_Ancestor) {}
 
-  void Report(std::ostream& out) const;
-  void Execute(std::ostream& out, Location * targetLocation,
+  void Report(MessageLog& log) const;
+  void Execute(MessageLog& log, Location * targetLocation,
 	       const StateChangesMap * changesMap);
   void Execute(StateMap * stateMap);
-  void DebugPrint(std::ostream& out) const;
+  void DebugPrint(MessageLog& log) const;
   int  Depth() const;
 
   std::deque<FileInfo *> *

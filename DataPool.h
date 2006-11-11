@@ -3,6 +3,7 @@
 
 #include "StateMap.h"
 #include "Location.h"
+#include "MessageLog.h"
 
 #include <vector>
 #include <string>
@@ -52,7 +53,7 @@ public:
 
   void ComputeChanges();
   void ResolveConflicts();
-  void ApplyChanges(std::ostream& out);
+  void ApplyChanges(MessageLog& log);
 };
 
 } // namespace Attic

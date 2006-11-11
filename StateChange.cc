@@ -2,32 +2,32 @@
 #include "StateMap.h"
 #include "Location.h"
 
-#include <iostream>
-
 namespace Attic {
 
-void StateChange::Report(std::ostream& out) const
+void StateChange::Report(MessageLog& log) const
 {
+  std::string prefix;
+
   switch (ChangeKind) {
   case Add:
-    out << "A ";
+    prefix = "A ";
     break;
   case Remove:
-    out << "R ";
+    prefix = "R ";
     break;
   case Update:
-    out << "M ";
+    prefix = "M ";
     break;
   case UpdateProps:
-    out << "p ";
+    prefix = "p ";
     break;
   default:
     assert(0);
     break;
   }
 
-  out << Path::Combine(Item->Repository->Moniker, Item->FullName)
-      << std::endl;
+  LOG(log, Message,
+      prefix << Path::Combine(Item->Repository->Moniker, Item->FullName));
 }
 
 std::deque<FileInfo *> *
@@ -40,12 +40,13 @@ StateChange::ExistsAtLocation(StateMap * stateMap,
   return stateMap->FindDuplicate(Item);
 }
 
-void StateChange::Execute(std::ostream& out, Location * targetLocation,
+void StateChange::Execute(MessageLog& log, Location * targetLocation,
 			  const StateChangesMap * changesMap)
 {
-  Path targetPath(Path::Combine(targetLocation->CurrentPath, Item->FullName));
-
-  FileInfo targetInfo(targetPath);
+  Path	      targetPath(Path::Combine(targetLocation->CurrentPath,
+				       Item->FullName));
+  FileInfo    targetInfo(targetPath);
+  std::string label;
 
   switch (ChangeKind) {
   case Add:
@@ -54,10 +55,10 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
 	if (targetInfo.IsDirectory())
 	  return;
 	targetInfo.Delete();
-	out << "D " << targetPath << std::endl;
+	LOG(log, Message, "D " << targetPath);
       }
       Directory::CreateDirectory(targetPath);
-      out << "c ";
+      label = "c ";
     }
     else if (Item->IsRegularFile()) {
       if (targetInfo.Exists()) {
@@ -67,13 +68,13 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
 	  CompareFiles(Item, &targetInfo, changes);
 	  if (! changes.empty()) {
 	    Item->CopyAttributes(targetPath);
-	    out << "p ";
+	    label = "p ";
 	    break;
 	  }
 	  return;
 	}
 	targetInfo.Delete();
-	out << "D " << targetPath << std::endl;
+	LOG(log, Message, "D " << targetPath);
       }
 
       // If Duplicate is non-NULL (and this applies only for Add
@@ -106,7 +107,7 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
 	  Directory::CreateDirectory(targetPath.DirectoryName());
 	  File::Move(Path::Combine(targetLocation->CurrentPath, Duplicate->FullName),
 		     targetPath);
-	  out << "m ";
+	  label = "m ";
 	  break;
 	} else {
 	  // jww (2006-11-09): Do this through the broker, since it
@@ -114,13 +115,13 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
 	  Directory::CreateDirectory(targetPath.DirectoryName());
 	  File::Copy(Path::Combine(targetLocation->CurrentPath, Duplicate->FullName),
 		     targetPath);
-	  out << "u ";
+	  label = "u ";
 	  break;
 	}
       }
 
       File::Copy(Item->Pathname, targetPath);
-      out << "U ";
+      label = "U ";
     }
     else {
       assert(0);
@@ -134,7 +135,7 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
       else
 	File::Delete(targetPath);
     }
-    out << "D ";
+    label = "D ";
     break;
 
   case Update:
@@ -142,12 +143,12 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
       File::Copy(Item->Pathname, targetPath);
     else
       assert(0);
-    out << "P ";
+    label = "P ";
     break;
 
   case UpdateProps:
     Item->CopyAttributes(targetPath);
-    out << "p ";
+    label = "p ";
     break;
 
   default:
@@ -155,8 +156,8 @@ void StateChange::Execute(std::ostream& out, Location * targetLocation,
     break;
   }
 
-  out << Path::Combine(targetLocation->Moniker, Item->FullName)
-      << std::endl;
+  LOG(log, Message,
+      label << Path::Combine(targetLocation->Moniker, Item->FullName));
 }
 
 void StateChange::Execute(StateMap * stateMap)
@@ -194,20 +195,26 @@ void StateChange::Execute(StateMap * stateMap)
   }
 }
 
-void StateChange::DebugPrint(std::ostream& out) const
+void StateChange::DebugPrint(MessageLog& log) const
 {
+  std::string label;
+
   switch (ChangeKind) {
-  case Nothing: out << "Nothing "; break;
-  case Add: out << "Add "; break;
-  case Remove: out << "Remove "; break;
-  case Update: out << "Update "; break;
-  case UpdateProps: out << "UpdateProps "; break;
+  case Nothing:	    label = "Nothing "; break;
+  case Add:	    label = "Add "; break;
+  case Remove:	    label = "Remove "; break;
+  case Update:	    label = "Update "; break;
+  case UpdateProps: label = "UpdateProps "; break;
+  default:          assert(0); break;
   }
 
-  if (Ancestor)
-    out << "Ancestor(" << Ancestor << ") ";
-
-  out << Item->FullName << " ";
+  if (Ancestor) {
+    LOG(log, Message,
+	label << "Ancestor(" << Ancestor << ") " <<
+	Item->FullName << " ");
+  } else {
+    LOG(log, Message, label << Item->FullName << " ");
+  }
 }
 
 int StateChange::Depth() const
