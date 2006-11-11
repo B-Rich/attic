@@ -11,6 +11,7 @@ acconf.h.in
 aclocal.m4
 attic
 autom4te.cache
+branches
 config.guess
 config.log
 config.status
