@@ -5,7 +5,7 @@
 #include "Broker.h"
 #include "Archive.h"
 #include "StateMap.h"
-#include "StateChange.h"
+#include "ChangeSet.h"
 
 #include <map>
 #include <vector>
@@ -39,16 +39,16 @@ public:
   // the only change at this location were the deletion of a file, the
   // CurrentChanges map would point to a single DeleteChange object
   // representing this change in state.
-  StateMap *        CurrentState;
-  StateChangesMap * CurrentChanges;
+  mutable StateMap *  CurrentState;
+  mutable ChangeSet * CurrentChanges;
 
-  FileInfo * Root() {
+  FileInfo * Root() const {
     if (! CurrentState)
       CurrentState = new StateMap(new FileInfo("", NULL, this));
     return CurrentState->Root;
   }
-  void ComputeChanges(const StateMap * ancestor, StateChangesMap& changesMap);
-  void ApplyChanges(const StateChangesMap& changes);
+  void ComputeChanges(const StateMap * ancestor, ChangeSet& changeSet);
+  void ApplyChanges(const ChangeSet& changeSet);
 
   std::vector<Regex *> Regexps;
 
@@ -109,6 +109,25 @@ public:
 
   void CopyOptions(const Location& optionTemplate);
   void Initialize();
+
+  FileInfoArray * ExistsAtLocation(const FileInfo * Item,
+				   StateMap * stateMap = NULL) const {
+    if (CurrentState)
+      stateMap = CurrentState;
+    return stateMap->FindDuplicate(Item);
+  }
+
+#if 0
+  void ApplyChanges(MessageLog& log, const ChangeSet& changeSet) {
+    for (ChangeSet::ChangesMap::const_iterator i = changeSet.Changes.begin();
+	 i != changeSet.Changes.end();
+	 i++)
+      ApplyChange(log, *(*i).second, changeSet);
+  }
+#endif
+
+  void ApplyChange(MessageLog& log, const StateChange& change,
+		   const ChangeSet& changeSet);
 };
 
 } // namespace Attic

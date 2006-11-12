@@ -72,28 +72,23 @@ Location::~Location()
 }
 
 void Location::ComputeChanges(const StateMap * ancestor,
-			      StateChangesMap& changesMap)
+			      ChangeSet&       changeSet)
 {
   if (CurrentChanges)
     delete CurrentChanges;
-  CurrentChanges = new StateChangesMap;
+  CurrentChanges = new ChangeSet;
 
   if (! CurrentState)
     CurrentState = new StateMap(new FileInfo("", NULL, this));
 
-  CurrentState->CompareTo(ancestor, *CurrentChanges);
+  CurrentChanges->CompareStates(CurrentState, ancestor);
 
-  for (StateChangesMap::iterator i = CurrentChanges->begin();
-       i != CurrentChanges->end();
+  for (ChangeSet::ChangesMap::iterator i = CurrentChanges->Changes.begin();
+       i != CurrentChanges->Changes.end();
        i++) {
     for (StateChange * ptr = (*i).second; ptr; ptr = ptr->Next)
-      PostChange(ptr->Item, ptr->Ancestor, ptr->ChangeKind, changesMap);
+      changeSet.PostChange(ptr->ChangeKind, ptr->Item, ptr->Ancestor);
   }
-}
-
-void Location::ApplyChanges(const StateChangesMap& changes)
-{
-  // jww (2006-11-07): implement
 }
 
 void Location::CopyOptions(const Location& optionTemplate)
@@ -177,6 +172,126 @@ void Location::Initialize()
     Regexps.push_back(new Regex("core", true));
     Regexps.push_back(new Regex(".svn/", true));
   }
+}
+
+void Location::ApplyChange(MessageLog& log, const StateChange& change,
+			   const ChangeSet& changeSet)
+{
+  Path	   targetPath(Path::Combine(CurrentPath, change.Item->FullName));
+  FileInfo targetInfo(targetPath);
+
+  std::string label;
+  switch (change.ChangeKind) {
+  case StateChange::Add:
+    if (change.Item->IsDirectory()) {
+      if (targetInfo.Exists()) {
+	if (targetInfo.IsDirectory())
+	  return;
+	targetInfo.Delete();
+	LOG(log, Message, "D " << targetPath);
+      }
+      Directory::CreateDirectory(targetPath);
+      label = "c ";
+    }
+    else if (change.Item->IsRegularFile()) {
+      if (targetInfo.Exists()) {
+	if (targetInfo.IsRegularFile() &&
+	    targetInfo.Checksum() == change.Item->Checksum()) {
+	  ChangeSet ignoredChanges;
+	  ignoredChanges.CompareFiles(change.Item, &targetInfo);
+	  if (! ignoredChanges.Changes.empty()) {
+	    change.Item->CopyAttributes(targetPath);
+	    label = "p ";
+	    break;
+	  }
+	  return;
+	}
+	targetInfo.Delete();
+	LOG(log, Message, "D " << targetPath);
+      }
+
+      // If Duplicate is non-NULL (and this applies only for Add
+      // changes), then an exact copy of our entry already exists in
+      // the target location.  If it is marked for deletion, we'll
+      // move it to the target path; if it's not, we'll copy it over
+      // there.
+      if (change.Duplicates) {
+	FileInfo * Duplicate = change.Duplicates->front();
+
+	bool markedForDeletion = false;
+	if (CurrentChanges)
+	  for (FileInfoArray::const_iterator i = change.Duplicates->begin();
+	       i != change.Duplicates->end();
+	       i++) {
+	    ChangeSet::ChangesMap::const_iterator j =
+	      changeSet.Changes.find((*i)->FullName);
+	    if (j != changeSet.Changes.end()) {
+	      for (StateChange * ptr = (*j).second; ptr; ptr = ptr->Next)
+		if (ptr->ChangeKind == StateChange::Remove) {
+		  markedForDeletion = true;
+		  Duplicate = ptr->Item;
+		  break;
+		}
+	    }
+	    if (markedForDeletion)
+	      break;
+	  }
+
+	if (markedForDeletion) {
+	  Directory::CreateDirectory(targetPath.DirectoryName());
+	  File::Move(Path::Combine(CurrentPath, Duplicate->FullName),
+		     targetPath);
+	  label = "m ";
+	  break;
+	} else {
+	  // jww (2006-11-09): Do this through the broker, since it
+	  // must happen remotely
+	  Directory::CreateDirectory(targetPath.DirectoryName());
+	  File::Copy(Path::Combine(CurrentPath, Duplicate->FullName),
+		     targetPath);
+	  label = "u ";
+	  break;
+	}
+      }
+
+      File::Copy(change.Item->Pathname, targetPath);
+      label = "U ";
+    }
+    else {
+      assert(0);
+    }
+    break;
+
+  case StateChange::Remove:
+    if (targetInfo.Exists()) {
+      if (targetInfo.IsDirectory())
+	Directory::Delete(targetPath);
+      else
+	File::Delete(targetPath);
+    }
+    label = "D ";
+    break;
+
+  case StateChange::Update:
+    if (change.Item->IsRegularFile())
+      File::Copy(change.Item->Pathname, targetPath);
+    else
+      assert(0);
+    label = "P ";
+    break;
+
+  case StateChange::UpdateProps:
+    change.Item->CopyAttributes(targetPath);
+    label = "p ";
+    break;
+
+  default:
+    assert(0);
+    break;
+  }
+
+  LOG(log, Message,
+      label << Path::Combine(Moniker, change.Item->FullName));
 }
 
 } // namespace Attic

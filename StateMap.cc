@@ -13,7 +13,7 @@ void StateMap::RegisterChecksums(FileInfo * entry)
   if (entry->IsRegularFile()) {
     ChecksumMap::iterator i = EntriesByChecksum.find(entry->Checksum());
     if (i == EntriesByChecksum.end()) {
-      std::deque<FileInfo *> entryArray;
+      FileInfoArray entryArray;
       entryArray.push_back(entry);
       EntriesByChecksum.insert(ChecksumPair(entry->Checksum(), entryArray));
     } else {
@@ -64,7 +64,7 @@ void StateMap::SaveTo(std::ostream& out)
     Root->WriteTo(out);
 }
 
-std::deque<FileInfo *> * StateMap::FindDuplicate(FileInfo * item)
+FileInfoArray * StateMap::FindDuplicate(const FileInfo * item)
 {
   if (item->IsRegularFile()) {
     ChecksumMap::iterator i = EntriesByChecksum.find(item->Checksum());
@@ -72,6 +72,41 @@ std::deque<FileInfo *> * StateMap::FindDuplicate(FileInfo * item)
       return &(*i).second;
   }
   return NULL;
+}
+
+void StateMap::ApplyChange(const StateChange& change)
+{
+  FileInfo * entry;
+
+  switch (change.ChangeKind) {
+  case StateChange::Add:
+    entry = Root->FindOrCreateMember(change.Item->FullName);
+    change.Item->CopyDetails(*entry, true);
+    change.Item->CopyAttributes(*entry, true);
+    break;
+
+  case StateChange::Remove:
+    entry = Root->FindMember(change.Item->FullName);
+    if (entry)
+      entry->Parent->DestroyChild(entry);
+    break;
+
+  case StateChange::Update:
+    entry = Root->FindMember(change.Item->FullName);
+    if (entry)
+      change.Item->CopyDetails(*entry, true);
+    break;
+
+  case StateChange::UpdateProps:
+    entry = Root->FindMember(change.Item->FullName);
+    if (entry)
+      change.Item->CopyAttributes(*entry, true);
+    break;
+
+  default:
+    assert(0);
+    break;
+  }
 }
 
 } // namespace Attic

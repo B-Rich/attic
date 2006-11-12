@@ -1,6 +1,5 @@
 #include "FileInfo.h"
 #include "Location.h"
-#include "StateChange.h"
 #include "binary.h"
 
 #include <fstream>
@@ -20,65 +19,7 @@
 
 #include "md5.h"
 
-#ifdef HAVE_REALPATH
-extern "C" char *realpath(const char *, char resolved_path[]);
-#endif
-
 namespace Attic {
-
-Path Path::Combine(const Path& first, const Path& second)
-{
-  if (first.empty())
-    return second;
-  Path result(first);
-  if (! second.empty())
-    result += '/';
-  result += second;
-  return result;
-}
-
-Path Path::ExpandPath(const Path& path)
-{
-  char resolved_path[PATH_MAX];
-
-  if (path.length() == 0 || path[0] != '~')
-    return Path(realpath(path.c_str(), resolved_path));
-
-  const char * pfx = NULL;
-  std::string::size_type pos = path.find_first_of('/');
-
-  if (path.length() == 1 || pos == 1) {
-    pfx = std::getenv("HOME");
-#ifdef HAVE_GETPWUID
-    if (! pfx) {
-      // Punt. We're trying to expand ~/, but HOME isn't set
-      struct passwd * pw = getpwuid(getuid());
-      if (pw)
-	pfx = pw->pw_dir;
-    }
-#endif
-  }
-#ifdef HAVE_GETPWNAM
-  else {
-    std::string user(path, 1, pos == std::string::npos ?
-		     std::string::npos : pos - 1);
-    struct passwd * pw = getpwnam(user.c_str());
-    if (pw)
-      pfx = pw->pw_dir;
-  }
-#endif
-
-  // if we failed to find an expansion, return the path unchanged.
-
-  if (! pfx)
-    return Path(realpath(path.c_str(), resolved_path));
-
-  if (pos == std::string::npos)
-    return Path(realpath(pfx, resolved_path));
-
-  return Path(realpath(Combine(pfx, path.substr(pos + 1)).c_str(),
-		       resolved_path));
-}
 
 md5sum_t md5sum_t::checksum(const Path& path, md5sum_t& csum)
 {
@@ -110,25 +51,6 @@ std::ostream& operator<<(std::ostream& out, const md5sum_t& md5) {
     out << std::hex << (int)md5.digest[i];
   }
   return out;
-}
-
-void File::Copy(const Path& path, const Path& dest)
-{
-  assert(File::Exists(path));
-
-  std::ifstream fin(path.c_str());
-  std::ofstream fout(dest.c_str());
-
-  do {
-    char buf[8192];
-    fin.read(buf, 8192);
-    fout.write(buf, fin.gcount());
-  } while (! fin.eof() && fin.good() && fout.good());
-
-  fin.close();
-  fout.close();
-
-  assert(File::Exists(dest));
 }
 
 void FileInfo::dostat() const
@@ -296,7 +218,7 @@ FileInfo * FileInfo::FindOrCreateMember(const Path& path)
   return current->FindOrCreateChild(std::string(path, previ));
 }
 
-void FileInfo::CopyDetails(FileInfo& dest, bool dataOnly)
+void FileInfo::CopyDetails(FileInfo& dest, bool dataOnly) const
 {
   dest.flags	    = flags;
   dest.info.st_mode = info.st_mode;
@@ -308,7 +230,7 @@ void FileInfo::CopyDetails(FileInfo& dest, bool dataOnly)
     dest.SetChecksum(Checksum());
 }
 
-void FileInfo::CopyAttributes(FileInfo& dest, bool dataOnly)
+void FileInfo::CopyAttributes(FileInfo& dest, bool dataOnly) const
 {
   dest.SetFlags(FILEINFO_DIDSTAT);
 
@@ -329,7 +251,7 @@ void FileInfo::CopyAttributes(FileInfo& dest, bool dataOnly)
   dest.SetLastWriteTime(LastWriteTime());
 }
 
-void FileInfo::CopyAttributes(const Path& dest)
+void FileInfo::CopyAttributes(const Path& dest) const
 {
   File::SetPermissions(dest, Permissions());
   File::SetOwnership(dest, OwnerId(), GroupId());
@@ -398,7 +320,7 @@ void FileInfo::Delete()
   flags &= ~FILEINFO_EXISTS;
 }
 
-void FileInfo::Copy(const Path& dest)
+void FileInfo::Copy(const Path& dest) const
 {
   if (IsRegularFile()) {
     File::Copy(Pathname, dest);
@@ -421,7 +343,7 @@ void FileInfo::Move(const Path& dest)
 }
 
 FileInfo * FileInfo::ReadFrom(char *& data, FileInfo * parent,
-			      Location * repository)
+			      const Location * repository)
 {
   FileInfo * entry = new FileInfo(repository);
 
@@ -493,31 +415,6 @@ void FileInfo::WriteTo(std::ostream& out) const
 	 i++)
       (*i).second->WriteTo(out);
   }
-}
-
-void File::SetAccessTimes(const Path& path,
-			  const DateTime& LastAccessTime,
-			  const DateTime& LastWriteTime)
-{
-  struct timeval temp[2];
-
-  temp[0] = LastAccessTime;
-  temp[1] = LastWriteTime;
-
-  if (utimes(path.c_str(), temp) == -1)
-    throw Exception("Failed to set last write time of '" + path + "'");
-}
-
-void Directory::CreateDirectory(const Path& path)
-{
-  const char * b = path.c_str();
-  const char * p = b + 1;
-  while (*p) {
-    if (*p == '/')
-      CreateDirectory(FileInfo(std::string(path, 0, p - b)));
-    ++p;
-  }
-  CreateDirectory(FileInfo(path));
 }
 
 } // namespace Attic

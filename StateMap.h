@@ -3,7 +3,7 @@
 
 #include "Regex.h"
 #include "FileInfo.h"
-#include "StateChange.h"
+#include "ChangeSet.h"
 
 #include <map>
 #include <deque>
@@ -16,8 +16,8 @@ class StateMap
 public:
   FileInfo * Root;
 
-  typedef std::map<md5sum_t, std::deque<FileInfo *> >  ChecksumMap;
-  typedef std::pair<md5sum_t, std::deque<FileInfo *> > ChecksumPair;
+  typedef std::map<md5sum_t, FileInfoArray>  ChecksumMap;
+  typedef std::pair<md5sum_t, FileInfoArray> ChecksumPair;
 
   ChecksumMap EntriesByChecksum;
 
@@ -36,11 +36,16 @@ public:
     Root->AddChild(info);
   }
 
-  std::deque<FileInfo *> * FindDuplicate(FileInfo * item);
+  FileInfoArray * FindDuplicate(const FileInfo * item);
 
-  void CompareTo(const StateMap * ancestor, StateChangesMap& changesMap) const {
-    CompareFiles(Root, ancestor->Root, changesMap);
+  void ApplyChanges(const ChangeSet& changeSet) {
+    for (ChangeSet::ChangesMap::const_iterator i = changeSet.Changes.begin();
+	 i != changeSet.Changes.end();
+	 i++)
+      ApplyChange(*(*i).second);
   }
+
+  void ApplyChange(const StateChange& change);
 };
 
 } // namespace Attic

@@ -19,19 +19,19 @@ void DataPool::ComputeChanges()
 {
   if (AllChanges)
     delete AllChanges;
-  AllChanges = new StateChangesMap;
+  AllChanges = new ChangeSet;
 
   for (std::vector<Location *>::iterator i = Locations.begin();
        i != Locations.end();
        i++)
     if ((*i)->PreserveChanges)
-      (*i)->ComputeChanges(CommonAncestor, *AllChanges);
+      AllChanges->CompareStates(*i, CommonAncestor);
 }
 
 void DataPool::ResolveConflicts()
 {
-  for (StateChangesMap::iterator j = AllChanges->begin();
-       j != AllChanges->end();
+  for (ChangeSet::ChangesMap::iterator j = AllChanges->Changes.begin();
+       j != AllChanges->Changes.end();
        j++)
     if ((*j).second->Next)
       std::cout << "There are conflicts!" << std::endl;
@@ -42,22 +42,23 @@ void DataPool::ApplyChanges(MessageLog& log)
   if (! AllChanges)
     return;
 
-  StateChangesArray changesArray;
+  // jww (2006-11-11): Move this logic in ChangeSet.cc
+  ChangeSet::ChangesArray changesArray;
 
-  for (StateChangesMap::iterator i = AllChanges->begin();
-       i != AllChanges->end();
+  for (ChangeSet::ChangesMap::iterator i = AllChanges->Changes.begin();
+       i != AllChanges->Changes.end();
        i++)
     changesArray.push_back((*i).second);
 
   std::stable_sort(changesArray.begin(), changesArray.end(),
-		   StateChangeComparer());
+		   ChangeSet::ChangeComparer());
 
   for (std::vector<Location *>::iterator i = Locations.begin();
        i != Locations.end();
        i++) {
-    StateChangesArray thisChangesArray;
+    ChangeSet::ChangesArray thisChangesArray;
 
-    for (StateChangesArray::iterator j = changesArray.begin();
+    for (ChangeSet::ChangesArray::iterator j = changesArray.begin();
 	 j != changesArray.end();
 	 j++) {
       // Ignore changes in the origin's own repository (since the
@@ -66,7 +67,7 @@ void DataPool::ApplyChanges(MessageLog& log)
 	continue;
 
       if ((*j)->ChangeKind == StateChange::Add) {
-	(*j)->Duplicates = (*j)->ExistsAtLocation(CommonAncestor, *i);
+	(*j)->Duplicates = (*i)->ExistsAtLocation((*j)->Item, CommonAncestor);
 	if ((*j)->Duplicates) {
 	  thisChangesArray.push_front(*j);
 	  continue;
@@ -75,17 +76,17 @@ void DataPool::ApplyChanges(MessageLog& log)
       thisChangesArray.push_back(*j);
     }
 	
-    for (StateChangesArray::iterator j = thisChangesArray.begin();
+    for (ChangeSet::ChangesArray::iterator j = thisChangesArray.begin();
 	 j != thisChangesArray.end();
 	 j++)
       for (StateChange * ptr = *j; ptr; ptr = ptr->Next)
 	if (LoggingOnly) {
 	  ptr->Report(log);
 	} else {
-	  StateChangesMap * changesMap = (*i)->CurrentChanges;
-	  if (! changesMap && ! (*i)->PreserveChanges)
-	    changesMap = AllChanges;
-	  ptr->Execute(log, *i, changesMap);
+	  ChangeSet * changeSet = (*i)->CurrentChanges;
+	  if (! changeSet && ! (*i)->PreserveChanges)
+	    changeSet = AllChanges;
+	  (*i)->ApplyChange(log, *ptr, *changeSet);
 	}
   }
 
@@ -94,10 +95,10 @@ void DataPool::ApplyChanges(MessageLog& log)
     if (! CommonAncestor->Root)
       CommonAncestor->Root = new FileInfo;
 
-    for (StateChangesArray::iterator j = changesArray.begin();
+    for (ChangeSet::ChangesArray::iterator j = changesArray.begin();
 	 j != changesArray.end();
 	 j++)
-      (*j)->Execute(CommonAncestor);
+      CommonAncestor->ApplyChange(**j);
 
     std::ofstream fout(CommonAncestorPath.c_str());
     CommonAncestor->SaveTo(fout);

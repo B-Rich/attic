@@ -2,9 +2,11 @@
 #define _FILEINFO_H
 
 #include "DateTime.h"
+#include "Path.h"
 
 #include <string>
 #include <map>
+#include <deque>
 
 #include <sys/stat.h>
 #include <assert.h>
@@ -14,62 +16,6 @@
 #include "acconf.h"
 
 namespace Attic {
-
-class Path : public std::string
-{
-public:
-  Path() {}
-  Path(const char * name) : std::string(name) {}
-  Path(const std::string& name) : std::string(name) {}
-
-  static Path ExpandPath(const Path& path);
-  static Path Combine(const Path& first, const Path& second);
-
-#if 0
-  Path& operator+=(const Path& other) {
-    *this = Combine(*this, other);
-    return *this;
-  }
-#endif
-
-  static std::string GetFileName(const Path& path)
-  {
-    int index = path.rfind('/');
-    if (index != std::string::npos)
-      return path.substr(index + 1);
-    else      
-      return path;
-  }
-
-  std::string FileName() const {
-    return GetFileName(*this);
-  }
-
-  static Path GetDirectoryName(const Path& path)
-  {
-    int index = path.rfind('/');
-    if (index != std::string::npos)
-      return path.substr(0, index);
-    else      
-      return "";
-  }
-
-  Path DirectoryName() const {
-    return GetDirectoryName(*this);
-  }
-
-#if 0
-  static int PartsCount(const Path& path)
-  {
-    int len = path.length();
-    int count = 1;
-    for (int i = 0; i < len; i++)
-      if (path[i] == '/')
-	count++;
-    return count;
-  }
-#endif
-};
 
 class md5sum_t
 {
@@ -139,21 +85,21 @@ private:
   void dostat() const;
 
 public:
-  std::string Name;
-  Path	      FullName;		// This is computed during load/read
-  Location *  Repository;
-  Path	      Pathname;		// cache of Repository->CurrentPath + FullName
-  FileInfo *  Parent;		// This is computed during load/read
+  std::string	   Name;
+  Path		   FullName;	// This is computed during load/read
+  const Location * Repository;
+  Path		   Pathname;	// cache of Repository->CurrentPath + FullName
+  FileInfo *	   Parent;	// This is computed during load/read
 
 public:
-  FileInfo(Location * _Repository = NULL)
+  FileInfo(const Location * _Repository = NULL)
     : FileInfoData(FILEINFO_DIDSTAT | FILEINFO_VIRTUAL),
       Repository(_Repository), Parent(NULL), Children(NULL) {
     info.st_mode |= S_IFDIR;
   }
 
   FileInfo(const Path& _FullName, FileInfo * _Parent = NULL,
-	   Location * _Repository = NULL)
+	   const Location * _Repository = NULL)
     : FileInfoData(FILEINFO_NOFLAGS),
       Repository(_Repository), Parent(_Parent), Children(NULL) {
     SetPath(_FullName);
@@ -309,11 +255,11 @@ public:
 
   void	   CreateDirectory();
   void	   Delete();
-  void	   Copy(const Path& dest);
+  void	   Copy(const Path& dest) const;
   void	   Move(const Path& dest);
-  void	   CopyDetails(FileInfo& dest, bool dataOnly = false);
-  void	   CopyAttributes(FileInfo& dest, bool dataOnly = false);
-  void	   CopyAttributes(const Path& dest);
+  void	   CopyDetails(FileInfo& dest, bool dataOnly = false) const;
+  void	   CopyAttributes(FileInfo& dest, bool dataOnly = false) const;
+  void	   CopyAttributes(const Path& dest) const;
   void     GetFileInfos(ChildrenMap& store) const;
   int	   ChildrenSize() const;
 
@@ -339,60 +285,13 @@ public:
   FileInfo * FindOrCreateMember(const Path& path);
 
   static FileInfo * ReadFrom(char *& data, FileInfo * parent = NULL,
-			     Location * repository = NULL);
+			     const Location * repository = NULL);
 
   void WriteTo(std::ostream& out) const;
   void DumpTo(std::ostream& out, bool verbose, int depth = 0);
 };
 
-class File
-{
-public:
-  static bool Exists(const Path& path) {
-    return FileInfo(path).Exists();
-  }
-
-  static void Delete(const Path& path) {
-    if (unlink(path.c_str()) == -1)
-      throw Exception("Failed to delete '" + path + "'");
-  }
-
-  static void Copy(const Path& path, const Path& dest);
-  static void Move(const Path& path, const Path& dest) {
-    if (rename(path.c_str(), dest.c_str()) == -1)
-      throw Exception("Failed to move '" + path + "' to '" + dest + "'");
-  }
-
-  static void SetPermissions(const Path& path, mode_t mode) {
-    if (chmod(path.c_str(), mode) == -1)
-      throw Exception("Failed to change permissions of '" + path + "'");
-  }
-
-  static void SetOwnership(const Path& path, uid_t uid, gid_t gid) {
-    if (chown(path.c_str(), uid, gid) == -1)
-      throw Exception("Failed to change ownership of '" + path + "'");
-  }
-
-  static void SetAccessTimes(const Path& path,
-			     const DateTime& LastAccessTime,
-			     const DateTime& LastWriteTime);
-};
-
-class Directory : public File
-{
-  static void CreateDirectory(const FileInfo& info) {
-    if (! info.Exists())
-      if (mkdir(info.Pathname.c_str(), 0755) == -1)
-	throw Exception("Failed to create directory '" + info.Pathname + "'");
-  }
-
-public:
-  static void CreateDirectory(const Path& path);
-  static void Delete(const Path& path) {
-    if (rmdir(path.c_str()) == -1)
-      throw Exception("Failed to remove directory '" + path + "'");
-  }
-};
+typedef std::deque<FileInfo *> FileInfoArray;
 
 } // namespace Attic
 

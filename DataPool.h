@@ -23,9 +23,9 @@ public:
   // place by causing all locations after the first to simply mimic
   // the first -- meaning that bidirectional updating cannot take
   // place.
-  Path              CommonAncestorPath;
-  StateMap *	    CommonAncestor;
-  StateChangesMap * AllChanges;
+  Path        CommonAncestorPath;
+  StateMap *  CommonAncestor;
+  ChangeSet * AllChanges;
 
   bool LoggingOnly;
 

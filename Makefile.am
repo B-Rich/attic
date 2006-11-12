@@ -3,8 +3,8 @@ bin_PROGRAMS = attic
 attic_CXXFLAGS =
 attic_SOURCES = \
 	attic.cc binary.cc md5.c \
-	DateTime.cc FileInfo.cc Regex.cc \
-	StateMap.cc StateChange.cc \
+	DateTime.cc Path.cc FileInfo.cc Regex.cc \
+	StateMap.cc StateChange.cc ChangeSet.cc \
 	DataPool.cc Location.cc
 
 if DEBUG
