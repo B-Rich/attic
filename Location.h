@@ -4,7 +4,6 @@
 #include "Regex.h"
 #include "Broker.h"
 #include "Archive.h"
-#include "StateMap.h"
 #include "ChangeSet.h"
 
 #include <map>
@@ -18,7 +17,6 @@ namespace Attic {
 // A Location represents a directory on a mounted volume or a remote
 // host, with an associated state map.
 
-class StateMap;
 class Location
 {
 public:
@@ -30,6 +28,20 @@ public:
   // slave mode on the Location's host.
   Broker * SiteBroker;
 
+  mutable FileInfo * RootEntry;
+
+  FileInfo * Root() const {
+    return NULL;
+  }
+
+  typedef std::map<md5sum_t, FileInfoArray>  ChecksumMap;
+  typedef std::pair<md5sum_t, FileInfoArray> ChecksumPair;
+
+  ChecksumMap EntriesByChecksum;
+
+  void RegisterChecksums(FileInfo * entry);
+  FileInfoArray * FindDuplicates(const FileInfo * item);
+
   // If a location supports bidirectional updating, it will be
   // determined upon connection how it now differs from the DataPool's
   // CommonAncestor.  If these changes can be determined, after the
@@ -39,33 +51,12 @@ public:
   // the only change at this location were the deletion of a file, the
   // CurrentChanges map would point to a single DeleteChange object
   // representing this change in state.
-  mutable StateMap *  CurrentState;
   mutable ChangeSet * CurrentChanges;
 
-  FileInfo * Root() const {
-    if (! CurrentState)
-      CurrentState = new StateMap(new FileInfo("", NULL, this));
-    return CurrentState->Root;
-  }
-  void ComputeChanges(const StateMap * ancestor, ChangeSet& changeSet);
+  void Sync() const { SiteBroker->Sync(); }
   void ApplyChanges(const ChangeSet& changeSet);
 
   std::vector<Regex *> Regexps;
-
-  std::string  Moniker;
-  Path	       RootPath;
-  Path	       VolumePath;
-  Path	       CurrentPath;
-  unsigned int VolumeSize;
-  unsigned int VolumeQuota;
-  unsigned int MaximumSize;
-  unsigned int MaximumPercent;
-  Archive *    ArchivalStore;
-  Path         TempDirectory;
-  std::string  CompressionScheme;
-  std::string  CompressionOptions;
-  std::string  EncryptionScheme;
-  std::string  EncryptionOptions;
 
   // If LowBandwidth is true, signature files will be kept in the
   // state map for the common ancestor so that this data need not be
@@ -77,7 +68,7 @@ public:
   bool CaseSensitive;		// -c if true, file system is case sensitive
   bool TrustLengthOnly;		//    if true, only check files based on size
   bool TrustTimestamps;		//    if false, checksum to detect changes (-c)
-  bool OverwriteCopy;		// -O if true, copy directly over the target
+  bool CopyByOverwrite;		// -O if true, copy directly over the target
   bool CopyWholeFiles;		//    if true, do not use the rsync algorithm
   bool ChecksumVerify;		// -V if true, do a checksum after every copy
   bool VerifyResults;		//    if true, verify location's state after
@@ -103,30 +94,25 @@ public:
 
   // Initialize this location using optionTemplate to determine the
   // default values for options.
-  Location(const std::string& path = "");
-  Location(const std::string& path, const Location& optionTemplate);
+  Location(Broker * _SiteBroker = NULL);
+  Location(Broker * _SiteBroker, const Location& optionTemplate);
   ~Location();
 
   void CopyOptions(const Location& optionTemplate);
   void Initialize();
 
-  FileInfoArray * ExistsAtLocation(const FileInfo * Item,
-				   StateMap * stateMap = NULL) const {
-    if (CurrentState)
-      stateMap = CurrentState;
-    return stateMap->FindDuplicate(Item);
-  }
-
+  FileInfoArray * ExistsAtLocation(const FileInfo * Item) const {
 #if 0
-  void ApplyChanges(MessageLog& log, const ChangeSet& changeSet) {
-    for (ChangeSet::ChangesMap::const_iterator i = changeSet.Changes.begin();
-	 i != changeSet.Changes.end();
-	 i++)
-      ApplyChange(log, *(*i).second, changeSet);
-  }
+    Location * currentState = SiteBroker;
+    if (! currentState)
+      currentState = StateBroker;
+    return currentState->FindDuplicates(Item);
+#else
+    return NULL;
 #endif
+  }
 
-  void ApplyChange(MessageLog& log, const StateChange& change,
+  void ApplyChange(MessageLog * log, const StateChange& change,
 		   const ChangeSet& changeSet);
 };
 

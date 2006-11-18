@@ -11,13 +11,14 @@ int main(int argc, char *args[])
   try {
 
   Location   optionTemplate;
-  Manager    atticManager;
   MessageLog messageLog(std::cout);
+  Manager    atticManager(messageLog);
   DataPool * pool = atticManager.CreatePool();
 
   for (int i = 1; i < argc; i++) {
     if (args[i][0] != '-') {
-      pool->Locations.push_back(new Location(Path::ExpandPath(args[i])));
+      Broker * broker = new VolumeBroker(Path::ExpandPath(args[i]));
+      pool->Locations.push_back(new Location(broker));
       continue;
     }
 
@@ -27,20 +28,10 @@ int main(int argc, char *args[])
       break;
 
     case '>': {
-      Path database(Path::ExpandPath(args[++i]));
-      if (! File::Exists(database))
-	return 1;
-
-      std::cout << "Dumping state database '" << database << "':"
+      DatabaseBroker db(Path::ExpandPath(args[++i]));
+      std::cout << "Dumping state database '" << db.DatabasePath << "':"
 		<< std::endl;
-
-      StateMap stateMap;
-      stateMap.LoadFrom(database);
-      if (stateMap.Root)
-	stateMap.Root->DumpTo(std::cout, optionTemplate.VerboseLogging);
-      else
-	std::cout << "Database has no contents!" << std::endl;
-
+      db.Dump(std::cout, optionTemplate.VerboseLogging);
       return 0;
     }
 
@@ -64,8 +55,12 @@ int main(int argc, char *args[])
 #endif
 
     case 'd':
-      if (i + 1 < argc)
-	pool->LoadAncestorFromFile(Path::ExpandPath(args[++i]));
+      if (i + 1 < argc) {
+	DatabaseBroker * broker =
+	  new DatabaseBroker(Path::ExpandPath(args[++i]));
+	pool->RegisterAncestor(new Location(broker));
+	broker->Load();
+      }
       break;
 
     case 'n':
@@ -151,7 +146,7 @@ Update the database to reflect foo's recent changes:\n\
   
   pool->Locations.front()->PreserveChanges = true;
 
-  atticManager.Start(messageLog);
+  atticManager.Synchronize();
 
 #if 0
   bool createdDatabase = false;

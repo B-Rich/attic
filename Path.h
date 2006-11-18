@@ -18,14 +18,19 @@ public:
   Path(const std::string& name) : std::string(name) {}
 
   static Path ExpandPath(const Path& path);
-  static Path Combine(const Path& first, const Path& second);
+  static Path Combine(const Path& first, const Path& second) {
+    Path temp(first);
+    temp += second;
+    return temp;
+  }
 
-#if 0
   Path& operator+=(const Path& other) {
-    *this = Combine(*this, other);
+    if (! empty() && (*this)[length() - 1] != '/' &&
+	! other.empty() && other[0] != '/')
+      this->std::string::operator +=("/");
+    this->std::string::operator +=(other);
     return *this;
   }
-#endif
 
   static std::string GetFileName(const Path& path)
   {

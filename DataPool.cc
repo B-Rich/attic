@@ -25,7 +25,7 @@ void DataPool::ComputeChanges()
        i != Locations.end();
        i++)
     if ((*i)->PreserveChanges)
-      AllChanges->CompareStates(*i, CommonAncestor);
+      AllChanges->CompareLocations(*i, CommonAncestor);
 }
 
 void DataPool::ResolveConflicts()
@@ -39,6 +39,7 @@ void DataPool::ResolveConflicts()
 
 void DataPool::ApplyChanges(MessageLog& log)
 {
+#if 0
   if (! AllChanges)
     return;
 
@@ -86,24 +87,19 @@ void DataPool::ApplyChanges(MessageLog& log)
 	  ChangeSet * changeSet = (*i)->CurrentChanges;
 	  if (! changeSet && ! (*i)->PreserveChanges)
 	    changeSet = AllChanges;
-	  (*i)->ApplyChange(log, *ptr, *changeSet);
+	  (*i)->ApplyChange(&log, *ptr, *changeSet);
 	}
   }
 
   // Reflect all of the changes in the ancestor map
   if (! LoggingOnly && CommonAncestor) {
-    if (! CommonAncestor->Root)
-      CommonAncestor->Root = new FileInfo;
-
     for (ChangeSet::ChangesArray::iterator j = changesArray.begin();
 	 j != changesArray.end();
 	 j++)
-      CommonAncestor->ApplyChange(**j);
-
-    std::ofstream fout(CommonAncestorPath.c_str());
-    CommonAncestor->SaveTo(fout);
-    fout.close();
+      CommonAncestor->ApplyChange(NULL, **j, *AllChanges);
+    CommonAncestor->Sync();
   }      
+#endif
 }
 
 } // namespace Attic

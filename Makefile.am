@@ -3,9 +3,9 @@ bin_PROGRAMS = attic
 attic_CXXFLAGS =
 attic_SOURCES = \
 	attic.cc binary.cc md5.c \
-	DateTime.cc Path.cc FileInfo.cc Regex.cc \
-	StateMap.cc StateChange.cc ChangeSet.cc \
-	DataPool.cc Location.cc
+	FileInfo.cc Path.cc DateTime.cc Regex.cc \
+	ChangeSet.cc StateChange.cc \
+	DataPool.cc Location.cc Broker.cc
 
 if DEBUG
 attic_CXXFLAGS += -DDEBUG_LEVEL=4

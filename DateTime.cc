@@ -32,7 +32,7 @@ typedef std::ostream::pos_type ostream_pos_type;
 DateTime    DateTime::Now(std::time(NULL));
 int	    DateTime::current_year = DateTime::Now.year();
 std::string DateTime::input_format;
-std::string DateTime::output_format = "%Y/%m/%d";
+std::string DateTime::output_format = "%Y/%m/%d %H:%M:%S";
 
 const char * DateTime::formats[] = {
   "%Y/%m/%d",
@@ -237,13 +237,6 @@ void DateTime::parse(std::istream& in)
 
 std::ostream& operator<<(std::ostream& out, const DateTime& moment)
 {
-  std::string format = DateTime::output_format;
-  std::tm * secs = moment.localtime();
-  if (secs->tm_hour != 0 || secs->tm_min != 0 || secs->tm_sec != 0)
-    format += " %H:%M:%S";
-
-  char buf[64];
-  std::strftime(buf, 63, format.c_str(), secs);
-  out << buf;
+  out << moment.to_string();
   return out;
 }

@@ -11,7 +11,6 @@
 namespace Attic {
 
 class Location;
-class StateMap;
 class ChangeSet
 {
   void PostAddChange(FileInfo * entry);
@@ -44,10 +43,8 @@ public:
   void PostChange(StateChange::Kind kind, FileInfo * entry,
 		  FileInfo * ancestor);
 
-  void CompareStates(const Location * origin,
-		     const StateMap * ancestor);
-  void CompareStates(const StateMap * origin,
-		     const StateMap * ancestor);
+  void CompareLocations(const Location * origin,
+			const Location * ancestor);
   void CompareFiles(FileInfo * entry, FileInfo * ancestor);
 };
 

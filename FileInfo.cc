@@ -55,14 +55,8 @@ std::ostream& operator<<(std::ostream& out, const md5sum_t& md5) {
 
 void FileInfo::dostat() const
 {
-  if (lstat(Pathname.c_str(), &info) == -1) {
-    if (errno == ENOENT) {
-      flags |= FILEINFO_DIDSTAT;
-      return;
-    }
-    throw Exception("Failed to stat '" + Pathname + "'");
-  }
-  flags |= FILEINFO_DIDSTAT | FILEINFO_EXISTS;
+  Repository->SiteBroker->ReadFileProperties(FullName,
+					    const_cast<FileInfo *>(this));
 }
 
 FileInfo::~FileInfo()
@@ -73,6 +67,9 @@ FileInfo::~FileInfo()
 	 i++)
       delete (*i).second;
   }
+
+  if (IsTempFile())
+    Delete();
 }
 
 void FileInfo::SetPath(const Path& _FullName)
@@ -80,9 +77,11 @@ void FileInfo::SetPath(const Path& _FullName)
   FullName = _FullName;
   Name     = Path::GetFileName(FullName);
 
+#if 0
   if (Repository)
-    Pathname = Path::Combine(Repository->CurrentPath, FullName);
+    Pathname = Path::Combine(Repository->SiteBroker->CurrentPath, FullName);
   else
+#endif
     Pathname = FullName;
 }
 
@@ -314,10 +313,11 @@ void FileInfo::Delete()
 	 i++)
       (*i).second->Delete();
     Directory::Delete(FullName);
-  } else {
+  }
+  else if (Exists() && ! IsVirtual()) {
     File::Delete(FullName);
   }
-  flags &= ~FILEINFO_EXISTS;
+  ClearFlags(FILEINFO_EXISTS);
 }
 
 void FileInfo::Copy(const Path& dest) const
@@ -343,7 +343,7 @@ void FileInfo::Move(const Path& dest)
 }
 
 FileInfo * FileInfo::ReadFrom(char *& data, FileInfo * parent,
-			      const Location * repository)
+			      Location * repository)
 {
   FileInfo * entry = new FileInfo(repository);
 
@@ -415,6 +415,12 @@ void FileInfo::WriteTo(std::ostream& out) const
 	 i++)
       (*i).second->WriteTo(out);
   }
+}
+
+std::string FileInfo::Moniker() const
+{
+  assert(Repository);
+  return Repository->SiteBroker->Moniker(FullName);
 }
 
 } // namespace Attic

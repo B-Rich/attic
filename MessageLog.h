@@ -37,11 +37,11 @@ public:
   }
 };
 
-#define LOG(log, kind, stream) {		\
-  std::ostringstream buf;			\
-  buf << stream;				\
-  log.SendMessage(MessageLog::kind, buf.str());	\
-}
+#define LOG(log, kind, stream) {			\
+    std::ostringstream buf;				\
+    buf << stream;					\
+    (log).SendMessage(MessageLog::kind, buf.str());	\
+  }
 
 } // namespace Attic
 

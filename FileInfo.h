@@ -43,6 +43,7 @@ public:
 #define FILEINFO_HANDLED  0x04
 #define FILEINFO_VIRTUAL  0x08
 #define FILEINFO_EXISTS   0x10
+#define FILEINFO_TEMPFILE 0x20	// deleted upon destruction
 #define FILEINFO_ALLFLAGS 0xff
 
 class FileInfoData
@@ -70,6 +71,8 @@ public:
   bool HasFlags(flags_t _flags = FILEINFO_ALLFLAGS) const {
     return flags & _flags;
   }
+
+  friend class VolumeBroker;
 };
 
 class Location;
@@ -85,21 +88,21 @@ private:
   void dostat() const;
 
 public:
-  std::string	   Name;
-  Path		   FullName;	// This is computed during load/read
-  const Location * Repository;
-  Path		   Pathname;	// cache of Repository->CurrentPath + FullName
-  FileInfo *	   Parent;	// This is computed during load/read
+  std::string Name;
+  Path	      FullName;		// This is computed during load/read
+  Location *  Repository;
+  Path	      Pathname;		// cache of Repository->CurrentPath + FullName
+  FileInfo *  Parent;		// This is computed during load/read
 
 public:
-  FileInfo(const Location * _Repository = NULL)
+  FileInfo(Location * _Repository = NULL)
     : FileInfoData(FILEINFO_DIDSTAT | FILEINFO_VIRTUAL),
       Repository(_Repository), Parent(NULL), Children(NULL) {
     info.st_mode |= S_IFDIR;
   }
 
   FileInfo(const Path& _FullName, FileInfo * _Parent = NULL,
-	   const Location * _Repository = NULL)
+	   Location * _Repository = NULL)
     : FileInfoData(FILEINFO_NOFLAGS),
       Repository(_Repository), Parent(_Parent), Children(NULL) {
     SetPath(_FullName);
@@ -236,6 +239,9 @@ public:
   bool IsVirtual() const {
     return flags & FILEINFO_VIRTUAL;
   }
+  bool IsTempFile() const {
+    return flags & FILEINFO_TEMPFILE;
+  }
   bool IsDirectory() const {
     if (! (flags & FILEINFO_DIDSTAT)) dostat();
     return (info.st_mode & S_IFMT) == S_IFDIR;
@@ -285,10 +291,12 @@ public:
   FileInfo * FindOrCreateMember(const Path& path);
 
   static FileInfo * ReadFrom(char *& data, FileInfo * parent = NULL,
-			     const Location * repository = NULL);
+			     Location * repository = NULL);
 
   void WriteTo(std::ostream& out) const;
   void DumpTo(std::ostream& out, bool verbose, int depth = 0);
+
+  std::string Moniker() const;
 };
 
 typedef std::deque<FileInfo *> FileInfoArray;

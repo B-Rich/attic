@@ -3,18 +3,16 @@
 
 namespace Attic {
 
-Location::Location(const std::string& path)
-  : SiteBroker(NULL), CurrentState(NULL), CurrentChanges(NULL),
-    VolumeSize(0), VolumeQuota(0),
-    MaximumSize(0), MaximumPercent(0),
-    ArchivalStore(NULL),
+Location::Location(Broker * _SiteBroker)
+  : SiteBroker(_SiteBroker),
+    CurrentChanges(NULL),
 
     LowBandwidth(false),
     PreserveChanges(false),
     CaseSensitive(true),
     TrustLengthOnly(false),
     TrustTimestamps(true),
-    OverwriteCopy(false),
+    CopyByOverwrite(false),
     CopyWholeFiles(false),
     ChecksumVerify(false),
     VerifyResults(false),
@@ -38,41 +36,35 @@ Location::Location(const std::string& path)
     VerboseLogging(false),
     ExcludeCVS(false)
 {
-  if (! path.empty()) {
-    RootPath	= path;
-    CurrentPath = path;
-    Moniker	= CurrentPath;
-  }
+#if 0
+  if (SiteBroker)
+    SiteBroker->SetRepository(this);
+#endif
 }
 
-Location::Location(const std::string& path, const Location& optionTemplate)
-  : SiteBroker(NULL), CurrentState(NULL), CurrentChanges(NULL),
-    VolumeSize(0), VolumeQuota(0), MaximumSize(0), MaximumPercent(0),
-    ArchivalStore(NULL)
+Location::Location(Broker * _SiteBroker, const Location& optionTemplate)
+  : SiteBroker(_SiteBroker)
 {
-  RootPath    = path;
-  CurrentPath = path;
-  Moniker     = CurrentPath;
-
+#if 0
+  if (SiteBroker)
+    SiteBroker->SetRepository(this);
+#endif
   CopyOptions(optionTemplate);
 }
 
 Location::~Location()
 {
-  if (SiteBroker)     delete SiteBroker;
-  if (CurrentState)   delete CurrentState;
-  if (CurrentChanges) delete CurrentChanges;
+  if (SiteBroker)
+    delete SiteBroker;
 
   for (std::vector<Regex *>::iterator i = Regexps.begin();
        i != Regexps.end();
        i++)
     delete *i;
-
-  if (ArchivalStore)  delete ArchivalStore;
 }
 
-void Location::ComputeChanges(const StateMap * ancestor,
-			      ChangeSet&       changeSet)
+#if 0
+void Location::ComputeChanges(const Location * ancestor, ChangeSet& changeSet)
 {
   if (CurrentChanges)
     delete CurrentChanges;
@@ -81,7 +73,7 @@ void Location::ComputeChanges(const StateMap * ancestor,
   if (! CurrentState)
     CurrentState = new StateMap(new FileInfo("", NULL, this));
 
-  CurrentChanges->CompareStates(CurrentState, ancestor);
+  CurrentChanges->CompareLocations(this, ancestor);
 
   for (ChangeSet::ChangesMap::iterator i = CurrentChanges->Changes.begin();
        i != CurrentChanges->Changes.end();
@@ -90,6 +82,7 @@ void Location::ComputeChanges(const StateMap * ancestor,
       changeSet.PostChange(ptr->ChangeKind, ptr->Item, ptr->Ancestor);
   }
 }
+#endif
 
 void Location::CopyOptions(const Location& optionTemplate)
 {
@@ -98,7 +91,7 @@ void Location::CopyOptions(const Location& optionTemplate)
   CaseSensitive	      = optionTemplate.CaseSensitive;
   TrustLengthOnly     = optionTemplate.TrustLengthOnly;
   TrustTimestamps     = optionTemplate.TrustTimestamps;
-  OverwriteCopy	      = optionTemplate.OverwriteCopy;
+  CopyByOverwrite     = optionTemplate.CopyByOverwrite;
   CopyWholeFiles      = optionTemplate.CopyWholeFiles;
   ChecksumVerify      = optionTemplate.ChecksumVerify;
   VerifyResults	      = optionTemplate.VerifyResults;
@@ -174,10 +167,10 @@ void Location::Initialize()
   }
 }
 
-void Location::ApplyChange(MessageLog& log, const StateChange& change,
+void Location::ApplyChange(MessageLog * log, const StateChange& change,
 			   const ChangeSet& changeSet)
 {
-  Path	   targetPath(Path::Combine(CurrentPath, change.Item->FullName));
+  Path	   targetPath(change.Item->FullName);
   FileInfo targetInfo(targetPath);
 
   std::string label;
@@ -188,7 +181,8 @@ void Location::ApplyChange(MessageLog& log, const StateChange& change,
 	if (targetInfo.IsDirectory())
 	  return;
 	targetInfo.Delete();
-	LOG(log, Message, "D " << targetPath);
+	if (log)
+	  LOG(*log, Message, "D " << targetPath);
       }
       Directory::CreateDirectory(targetPath);
       label = "c ";
@@ -207,7 +201,8 @@ void Location::ApplyChange(MessageLog& log, const StateChange& change,
 	  return;
 	}
 	targetInfo.Delete();
-	LOG(log, Message, "D " << targetPath);
+	if (log)
+	  LOG(*log, Message, "D " << targetPath);
       }
 
       // If Duplicate is non-NULL (and this applies only for Add
@@ -239,16 +234,14 @@ void Location::ApplyChange(MessageLog& log, const StateChange& change,
 
 	if (markedForDeletion) {
 	  Directory::CreateDirectory(targetPath.DirectoryName());
-	  File::Move(Path::Combine(CurrentPath, Duplicate->FullName),
-		     targetPath);
+	  File::Move(Duplicate->FullName, targetPath);
 	  label = "m ";
 	  break;
 	} else {
 	  // jww (2006-11-09): Do this through the broker, since it
 	  // must happen remotely
 	  Directory::CreateDirectory(targetPath.DirectoryName());
-	  File::Copy(Path::Combine(CurrentPath, Duplicate->FullName),
-		     targetPath);
+	  File::Copy(Duplicate->FullName, targetPath);
 	  label = "u ";
 	  break;
 	}
@@ -290,8 +283,75 @@ void Location::ApplyChange(MessageLog& log, const StateChange& change,
     break;
   }
 
-  LOG(log, Message,
-      label << Path::Combine(Moniker, change.Item->FullName));
+  if (log)
+    LOG(*log, Message, label << SiteBroker->Moniker(change.Item->FullName));
 }
+
+void Location::RegisterChecksums(FileInfo * entry)
+{
+  if (entry->IsRegularFile()) {
+    ChecksumMap::iterator i = EntriesByChecksum.find(entry->Checksum());
+    if (i == EntriesByChecksum.end()) {
+      FileInfoArray entryArray;
+      entryArray.push_back(entry);
+      EntriesByChecksum.insert(ChecksumPair(entry->Checksum(), entryArray));
+    } else {
+      (*i).second.push_back(entry);
+    }
+  }
+  else if (entry->IsDirectory()) {
+    for (FileInfo::ChildrenMap::const_iterator i = entry->ChildrenBegin();
+	 i != entry->ChildrenEnd();
+	 i++)
+      RegisterChecksums((*i).second);
+  }
+}
+
+FileInfoArray * Location::FindDuplicates(const FileInfo * item)
+{
+  if (item->IsRegularFile()) {
+    ChecksumMap::iterator i = EntriesByChecksum.find(item->Checksum());
+    if (i != EntriesByChecksum.end())
+      return &(*i).second;
+  }
+  return NULL;
+}
+
+#if 0
+void StateMap::ApplyChange(const StateChange& change)
+{
+  FileInfo * entry;
+
+  switch (change.ChangeKind) {
+  case StateChange::Add:
+    entry = Root->FindOrCreateMember(change.Item->FullName);
+    change.Item->CopyDetails(*entry, true);
+    change.Item->CopyAttributes(*entry, true);
+    break;
+
+  case StateChange::Remove:
+    entry = Root->FindMember(change.Item->FullName);
+    if (entry)
+      entry->Parent->DestroyChild(entry);
+    break;
+
+  case StateChange::Update:
+    entry = Root->FindMember(change.Item->FullName);
+    if (entry)
+      change.Item->CopyDetails(*entry, true);
+    break;
+
+  case StateChange::UpdateProps:
+    entry = Root->FindMember(change.Item->FullName);
+    if (entry)
+      change.Item->CopyAttributes(*entry, true);
+    break;
+
+  default:
+    assert(0);
+    break;
+  }
+}
+#endif
 
 } // namespace Attic

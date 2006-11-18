@@ -1,5 +1,4 @@
 #include "StateChange.h"
-#include "StateMap.h"
 #include "Location.h"
 
 namespace Attic {
@@ -26,8 +25,7 @@ void StateChange::Report(MessageLog& log) const
     break;
   }
 
-  LOG(log, Message,
-      prefix << Path::Combine(Item->Repository->Moniker, Item->FullName));
+  LOG(log, Message, prefix << Item->Moniker());
 }
 
 void StateChange::DebugPrint(MessageLog& log) const

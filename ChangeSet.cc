@@ -154,16 +154,10 @@ bool ChangeSet::ChangeComparer::operator()
     return left->Item->FullName < right->Item->FullName;
 }
 
-void ChangeSet::CompareStates(const Location * origin,
-			      const StateMap * ancestor)
+void ChangeSet::CompareLocations(const Location * origin,
+				 const Location * ancestor)
 {
-  CompareFiles(origin->Root(), ancestor->Root);
-}
-
-void ChangeSet::CompareStates(const StateMap * origin,
-			      const StateMap * ancestor)
-{
-  CompareFiles(origin->Root, ancestor->Root);
+  CompareFiles(origin->Root(), ancestor->Root());
 }
 
 } // namespace Attic

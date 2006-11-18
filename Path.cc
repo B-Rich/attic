@@ -19,17 +19,6 @@ extern "C" char *realpath(const char *, char resolved_path[]);
 
 namespace Attic {
 
-Path Path::Combine(const Path& first, const Path& second)
-{
-  if (first.empty())
-    return second;
-  Path result(first);
-  if (! second.empty())
-    result += '/';
-  result += second;
-  return result;
-}
-
 Path Path::ExpandPath(const Path& path)
 {
   char resolved_path[PATH_MAX];

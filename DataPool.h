@@ -1,7 +1,6 @@
 #ifndef _DATAPOOL_H
 #define _DATAPOOL_H
 
-#include "StateMap.h"
 #include "Location.h"
 #include "MessageLog.h"
 
@@ -16,21 +15,18 @@ namespace Attic {
 class DataPool
 {
 public:
+  Location * CommonAncestor;
   std::vector<Location *> Locations;
 
   // This state map is the common ancestor of all the Locations listed
   // below.  If there is no CommonAncestor, then reconciliation takes
   // place by causing all locations after the first to simply mimic
-  // the first -- meaning that bidirectional updating cannot take
-  // place.
-  Path        CommonAncestorPath;
-  StateMap *  CommonAncestor;
+  // the first -- meaning that bidirectional updating cannot take place.
   ChangeSet * AllChanges;
 
   bool LoggingOnly;
 
-  DataPool()
-    : CommonAncestor(NULL), AllChanges(NULL), LoggingOnly(false) {}
+  DataPool() : CommonAncestor(NULL), AllChanges(NULL), LoggingOnly(false) {}
   ~DataPool();
 
   void Initialize() {
@@ -40,15 +36,8 @@ public:
       (*i)->Initialize();
   }
 
-  void UseAncestor() {
-    if (! CommonAncestor)
-      CommonAncestor = new StateMap;
-  }
-
-  void LoadAncestorFromFile(const Path& path) {
-    UseAncestor();
-    CommonAncestorPath = path;
-    CommonAncestor->LoadFrom(CommonAncestorPath);
+  void RegisterAncestor(Location * ancestor) {
+    CommonAncestor = ancestor;
   }
 
   void ComputeChanges();

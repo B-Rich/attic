@@ -1,5 +1,6 @@
 Title:   The Design of Attic
 Updated: 11/17/2006
+Style:   technical
 
 Overall Design
 ==============
@@ -138,9 +139,9 @@ Location, since there are a considerable number of such options.
 
 These three search methods offer ways to find files stored in a
 location.  If the std::string version is called, all files matching
-the given name are returned; if the Regex* version is called, all
+the given name are returned; if the `Regex*` version is called, all
 files whose full subpath matches the regular expression are returned;
-and if the FileInfo* version is used, any files considered to be an
+and if the `FileInfo*` version is used, any files considered to be an
 exact duplicate of that file are returned (including the file itself
 if it exists within the Location).
 

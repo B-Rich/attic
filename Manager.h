@@ -27,12 +27,13 @@ public:
 class Manager
 {
 public:
-  std::deque<DataPool *> CurrentPools;
   boost::thread_group    ActiveJobs;
+  std::deque<DataPool *> CurrentPools;
+  MessageLog&            CurrentLog;
+
+  Manager(MessageLog& log) : CurrentLog(log) {}
 
   ~Manager() {
-    ActiveJobs.join_all();
-
     for (std::deque<DataPool *>::iterator i = CurrentPools.begin();
 	 i != CurrentPools.end();
 	 i++)
@@ -45,21 +46,14 @@ public:
     return newPool;
   }
 
-  void Start(MessageLog& log) {
+  void operator()() {
     for (std::deque<DataPool *>::iterator i = CurrentPools.begin();
 	 i != CurrentPools.end();
 	 i++)
-      ActiveJobs.create_thread(RunPoolJob(*i, log));
+      ActiveJobs.create_thread(RunPoolJob(*i, CurrentLog));
+    ActiveJobs.join_all();
   }
-};
-
-class Closure
-{
-};
-
-template <typename T>
-class TypedClosure
-{
+  void Synchronize() { (*this)(); }
 };
 
 } // namespace Attic

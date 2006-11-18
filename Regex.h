@@ -14,10 +14,9 @@ public:
 
   explicit Regex(const std::string& pattern, bool globStyle = false);
 
-  Regex::Regex(const Regex& m)
-    : Exclude(m.Exclude), Pattern(m.Pattern) {}
+  Regex(const Regex& m) : Exclude(m.Exclude), Pattern(m.Pattern) {}
 
-  bool Regex::IsMatch(const std::string& str) const {
+  bool IsMatch(const std::string& str) const {
     return boost::regex_match(str, Pattern) && ! Exclude;
   }
 };
