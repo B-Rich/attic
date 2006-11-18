@@ -1,0 +1,584 @@
+Title:   The Design of Attic
+Updated: 11/17/2006
+
+Overall Design
+==============
+
+Attic is written to be a multi-threaded application in two respects:
+
+1. the main flow of logic is organized as a concurrent pipeline, and
+
+2. multiple file transfers are made to each target if possible, by
+   allocating jobs from a pool of worker threads.
+
+The first case is done so that transfers can begin as soon as
+possible, even before all changes within a file set have been
+determined.  The second case is fairly common among file
+synchronization programs, and is simply a way to saturate an ample
+network connection between two machines.
+
+
+Attic is designed to be easily understood from a code perspective,
+since I believe that complexity always invites error.  I tried reading
+the source code for many other open source file synchronization
+programs, but found my skills of comprehension too severely
+challenged.  I think there is room in the world for a comprehensive,
+yet easy to understand tool of this nature.
+
+Attic::Manager
+--------------
+
+Everything begins with a Manager object, which manages all of the
+resources used by Attic in the course of a "session".  You are welcome
+to have multiple Manager objects running, but typically there will be
+only one.
+
+The Manager has two principle methods:
+
+    DataPool *  CreatePool()    // Create and manage a DataPool object
+    void        Synchronize()   // Synchronize all managed DataPools
+
+Attic::DataPool
+---------------
+
+A DataPool defines the relationship between a group of Locations,
+where all these Locations are intended to be identical at the end of a
+synchronization.
+
+Since all that a DataPool does is to relate Location objects, its
+interface is also very simple:
+
+    void  AddLocation(Location&)
+    void  AddCommonAncestor(Location&)
+    void  Initialize()
+
+Location object must be created by the user separately, and can then
+be added to and managed by the DataPool.  The Location which maintains
+the Common Ancestor of all the DataPool's Locations is special, and
+must be added using a special method.  The Initialize method is called
+after all Locations have been added, and gives them all a chance to do
+startup initialization before the real action begins.
+
+    void  ComputeChanges(ChangeSet&)
+    void  ApplyChanges(MessageLog&, ChangeSet&)
+
+Once a DataPool has a set of Locations, you may do two things: compute
+the sum total of changes in all locations, and apply that same set
+back to the set of locations.  The reason this is broken in two is so
+that the user of the DataPool may reconcile conflicts in between the
+two steps.
+
+NOTE: I intend to create a Resolver object supporting callbacks, to be
+registered with and used by the Manager, that will stand between
+whatever interface the user has chosen (such as the command-line) and
+the Manager, allowing for visual reconciliation of change conflicts.
+
+Attic::Location
+---------------
+
+The DataPool ensures that multiple Locations are rendered identical by
+the synchronization process.  To use my own case as an example, I like
+to replicate the home directory on my laptop to several other
+locations:
+
+- (The original home directory)
+- A blank backup DVD I stick into in the burner
+- An external 300Gb Firewire drive
+- A 4Gb compact flash card
+- A second laptop with an equivalent-sized hard drive
+- An external host on the web
+
+At the end of a synchronization, I want all of these locations to be
+identical *within their constraints*.  The 4Gb flash card cannot
+possibly hold all my data, for instance, so in that case I use a set
+of exclusion regexps to synchronize only a part of my home directory.
+However, at the end of synchronization, those parts must be identical
+to the original.
+
+One of these locations -- the other laptop -- might contain changes of
+its own.  This is indicated by having the PreserveChanges flag set on
+that location.  When this happens, changes from both the home
+directory and the other laptop will be combined together.  If there is
+more than one change affecting a single file, this constitutes a
+conflict needing resolution.
+
+The interface for a Location is again simple, because it is still
+mostly just an abstraction, and does not interact with the real
+system -- which is the job of the Location's Broker.
+
+    Location(Broker * SiteBroker = NULL);
+    Location(Broker * SiteBroker, const Location& optionTemplate);
+
+These are the constructors for a Location.  A Location must specify
+which Broker it will be using (see below) at creation time.  If a
+Location has no broker, it may be used as an option template, but it
+cannot be added to a DataPool.
+
+    void        Initialize()    // called by DataPool::Initialize
+    void        ApplyChanges(MessageLog&, const ChangeSet&)
+    void        ApplyChange(MessageLog&, const StateChange&, const ChangeSet&)
+    void        Sync()
+    FileInfo *  Root()
+
+The ApplyChanges method is just like DataPool::ApplyChanges, and is
+called from there.  ApplyChange is called when ApplyChanges iterates
+through the contents of the changeset, applying each change to the
+Location.  The Sync method causes all changes applied thus far to be
+flushed to disk.  The Root method allows the caller access to the
+topmost file information object.
+
+    void  CopyOptions(const Location& optionTemplate)
+
+This method can be used to copy the option settings from another
+Location, since there are a considerable number of such options.
+
+    FileInfoArray * Search(const FileInfo * item)
+    FileInfoArray * Search(const Regex * regex)
+    FileInfoArray * Search(const std::string& name)
+
+These three search methods offer ways to find files stored in a
+location.  If the std::string version is called, all files matching
+the given name are returned; if the Regex* version is called, all
+files whose full subpath matches the regular expression are returned;
+and if the FileInfo* version is used, any files considered to be an
+exact duplicate of that file are returned (including the file itself
+if it exists within the Location).
+
+NOTE: I intend to also allow searching via metadata (such as files
+modified after a certain date), rather than just by name or exact
+match.
+
+In addition to these methods, there are also a large set of properties
+associated with each Location that describe its various attributes.
+These are used by Attic to determine how to optimize interactions with
+those Locations.
+
+    std::vector<Regex *>  Regexps // consider only matching entries
+  
+    bool LowBandwidth;        // -L if true, optimize traffic at all costs
+    bool PreserveChanges;     // -b if true, location changes are preserved
+    bool CaseSensitive;       // -c if true, file system is case sensitive
+    bool TrustLengthOnly;     //    if true, only check files based on size
+    bool TrustTimestamps;     //    if false, checksum to detect changes (-c)
+    bool CopyByOverwrite;     // -O if true, copy directly over the target
+    bool CopyWholeFiles;      //    if true, do not use the rsync algorithm
+    bool ChecksumVerify;      // -V if true, do a checksum after every copy
+    bool VerifyResults;       //    if true, verify location's state after
+    bool SecureDelete;        // -S if true, securely wipe any deleted file
+    bool DeleteBeforeUpdate;  // -D if true, delete files before changing them
+    bool PreserveTimestamps;  // -t if true, timestamps are part of state
+    bool PreserveHardLinks;   // -H if true, hard links are part of state
+    bool PreserveSoftLinks;   // -l if true, do not follow symbolic links -L
+    bool PreserveOwnership;   // -o if true, ownership details are part of state
+    bool PreserveGroup;       // -g if true, ownership details are part of state
+    bool PreservePermissions; // -p if true, file permissions are part of state
+    bool PreserveSparseFiles; // -S if true, "sparse"-ness is a part of state
+    bool EncodeFilenames;     // -@ if true, use lookup table for long filenames
+    bool ExtendedAttributes;  // -E if true, filesystem uses resource forks
+    bool CompressFiles;       //    if true, compress all files at location
+    bool CompressTraffic;     // -z if true, compress all files in transit
+    bool EncryptFiles;        //    if true, encrypt all files at location
+    bool EncryptTraffic;      //    if true, encrypt all files in transit
+    bool RespectBoundaries;   // -x if true, never cross filesystem boundaries
+    bool LoggingOnly;         // -n if true, don't transfer, just log operations
+    bool VerboseLogging;      // -v if true, make logging much more verbose
+    bool ExcludeCVS;          // -C if true, exclude files related to CVS
+
+Attic::Broker
+-------------
+
+A Location object does not directly interact with any filesystem.  It
+is simply an abstraction of a "location containing file information".
+It might be backed by a database, or a file system, or even a remote
+file system.  The job of retrieving file information from some kind of
+data backing is done by the location's Broker.
+
+The class Attic::Broker is actually an abstract class.  In order to
+create a Location -- which must reference a broker -- the caller has
+to decide which actual Broker class can provide details about that
+Location.  The list of choices so far is:
+
+    DatabaseBroker              // an abstract class
+    SqliteDatabaseBroker        // an actual class, backed by Sqlite
+    DirectDatabaseBroker        // backed by a flat file database
+  
+    VolumeBroker                // an abstract class
+    PosixVolumeBroker           // an actual class, a POSIX filesystem
+    HFSPlusVolumeBroker         // an OS/X HFS+ volume
+  
+    RemoteBroker                // an abstract class
+    SshClientBroker             // client to an ssh connection
+    SshServerBroker             // serves an ssh remote connection
+
+In the case of using remote brokers, the chain of communication might be:
+
+    Location ->
+      SshClientBroker ->
+      ... ->
+      SshServerBroker ->
+      PosixVolumeBroker
+
+In this case, there is an SshClient/SshServer pair between the
+Location and its ultimate source of information: the
+PosixVolumeBroker.
+
+Each Broker is responsible for gathering and returning information
+related to the files it references.  If a given filesystem supports
+special information (ACLs, attributes, forks, metadata), these are
+returned as data attached to a FileInfo object, which may or may not
+be interpreted by other Brokers.  For example, if an HFS+ file
+contains a resource fork, a reference to this fork will be associated
+with the related FileInfo object as metadata.  If the same file is
+then copied to another HFS+ volume, the resource fork is copied also.
+But if the file is copied to a POSIX filesystem, it's up to the
+PosixVolumeBroker to determine whether to encode the information as a
+specially named file, or discard it.
+
+Since Brokers do all the work of interacting with file information
+stores (databases, filesystems), they have a fairly rich interface:
+
+    void  Initialize(Location *)
+    void  Sync()
+
+Like the related methods in Location, these Initialize the Broker to
+work on behalf of the given Location, and Sync its contents so that
+any applied changes are flushed to the storage medium.
+
+    void  InstallFile(const FileInfo&)
+    void  DeleteFile(FileInfo&) // deletes the FileInfo if successful
+    void  ReadDirectory(FileInfo&)
+    void  ReadFileProperties(FileInfo&)
+    void  UpdateFileProperties(const FileInfo&)
+
+These methods read or change the underlying data store.  InstallFile
+will copy the attributes and contents of a FileInfo object from
+another Location to the one managed by this Broker.  DeleteFile
+destroys a file and will remove any reference to its from its parent.
+Note that when DeleteFile is done, the FileInfo object it is handed is
+deleted!  ReadDirectory reads all the directory entries of the given
+FileInfo object and adds them as children of that object.
+ReadFileProperties reads only the file properties (not any contents)
+of the given file info object.  This includes whatever kind of
+metadata is maintained by the Broker.  Lastly, UpdateFileProperties
+will reflect any changes to the FileInfo object back to the data
+store.
+
+    FileInfo  GetSignature(const FileInfo& entry)
+    FileInfo  CreateDelta(const FileInfo& entry, const FileInfo& signature)
+    void      ApplyDelta(FileInfo& entry, const FileInfo& delta)
+
+These two methods help to implement the rsync algorithm.  The first
+returns a reference to a temporary file containin a checksum signature
+of the given entry.  The second creates a delta based on this
+signature and the contents of a related file.  The third applies this
+delta to an older version of the file in an attempt to create the
+entry that GetSignature was called on.
+
+Note: The FileInfo objects returned by GetSignature and CreateDelta
+are marked as temp files, so unless they are copied to a Location they
+will be deleted upon destruction.
+
+    md5sum_t&  ComputeChecksum(FileInfo&)
+
+Read the checksum of a file, recording the checksum within the given
+FileInfo object and returning a reference to it as well.
+
+    std::string  Moniker(FileInfo&)
+
+Returns a moniker string that can be used to uniquely locate the file
+within its Location.  For example, a file in an Location managed by an
+SshClientBroker might have the following moniker:
+
+    ssh://johnw@hcoop.net:/home/johnw/src/attic/attic.cc
+
+This moniker is made up from several parts:
+
+    Protocol            ssh
+    Username            johnw
+    Hostname            hcoop.net
+    VolumeRoot          /home/johnw
+    FileInfo::FullName  src/attic/attic.cc
+
+Attic::FileInfo
+---------------
+
+The purpose of every Broker is to return FileInfo objects arranged in
+a hierarchy of parent/child relationships.  Each FileInfo object
+abstracts the details associated with every possible kind of file, all
+of which are accessible through its interface:
+
+    void  Reset()
+
+The Reset method renders all data referenced by the FileInfo object as
+invalid, forcing it to be reread from the Broker upon next access.
+
+    void  SetFlags(FileInfo::flags_t flags)
+    void  ClearFlags(FileInfo::flags_t flags)
+    bool  HasFlags(FileInfo::flags_t flags)
+
+The various Flags methods are for setting detail flags related to the
+file.  This is a fairly low-level interface and is not expected to be
+referenced by users.  However, the possible flags are:
+
+    FILEINFO_NOFLAGS
+    FILEINFO_DIDSTAT            // attributes/metadata have been read
+    FILEINFO_READCSUM           // checksum has been calculated
+    FILEINFO_HANDLED            // used by ChangeSet::CompareFiles
+    FILEINFO_VIRTUAL            // entry is a virtual "container"
+    FILEINFO_EXISTS             // entry actually exists
+    FILEINFO_TEMPFILE           // entry is a temp file
+    FILEINFO_ALLFLAGS
+
+The higher level interface meant to be used by users is:
+
+    bool             Exists() const
+    const off_t&     Length() const
+    void             SetLength(const off_t& len)
+    const md5sum_t&  Checksum() const
+    md5sum_t         CurrentChecksum() const
+    void             SetChecksum(const md5sum_t& _csum)
+    mode_t           Permissions() const
+    void             SetPermissions(const mode_t& mode)
+    const uid_t&     OwnerId() const
+    void             SetOwnerId(const uid_t& uid) const
+    const gid_t&     GroupId() const
+    void             SetGroupId(const gid_t& gid)
+    DateTime         LastWriteTime() const
+    void             SetLastWriteTime(const DateTime& when)
+    DateTime         LastAccessTime() const
+    void             SetLastAccessTime(const DateTime& when)
+    int              FileKind() const
+    bool             IsVirtual() const
+    bool             IsTempFile() const
+    bool             IsDirectory() const
+    bool             IsSymbolicLink() const
+    bool             IsRegularFile() const
+
+These methods return/set all the basic details relating to a file.
+The only two of note are: CurrentChecksum computes the file's checksum
+without storing the result in the FileInfo object.  This can be used
+to compare the remember checksum with the current checksum.  Also,
+FileKind returns an integer which is comparable with other calls to
+FileKind.  This is useful for testing whether two file objects are of
+the exact same type.
+
+    FileInfo  Directory() const
+    FileInfo  LinkReference() const
+
+Directory returns a copy of the FileInfo object representing the
+current object's parent directory.  If at all possible, the Parent
+property should be used instead.  LinkReference returns a copy of the
+file referenced by a symbolic link.
+
+    void  CreateDirectory();
+    void  Delete();
+    void  Copy(const Path& dest) const;
+    void  Move(const Path& dest);
+    void  CopyDetails(FileInfo& dest, bool dataOnly = false) const;
+    void  CopyAttributes(FileInfo& dest, bool dataOnly = false) const;
+    void  CopyAttributes(const Path& dest) const;
+
+These methods are used for interacting with the underlying filesystem.
+NOTE: These will change as I work on the Broker interface more.
+
+    typedef std::map<std::string, FileInfo *>  ChildrenMap;
+    typedef std::pair<std::string, FileInfo *> ChildrenPair;
+
+    int                    ChildrenSize() const;
+    ChildrenMap::iterator  ChildrenBegin() const
+    ChildrenMap::iterator  ChildrenEnd() const
+
+Some file objects can have children, such as directory or virtual
+containers.  These methods return the count of children, and C++
+iterators that can be used to walk those child objects.
+
+    void        AddChild(FileInfo * entry);
+    FileInfo *  CreateChild(const std::string& name);
+    void        DestroyChild(FileInfo * child);
+    FileInfo *  FindChild(const std::string& name);
+    FileInfo *  FindOrCreateChild(const std::string& name)
+    FileInfo *  FindMember(const Path& path);
+    FileInfo *  FindOrCreateMember(const Path& path);
+
+This low-level interface is for adding, destroying and looking up
+descendent members of a FileInfo object.
+
+    void DumpTo(std::ostream& out, bool verbose, int depth = 0)
+
+A debugging return for dumping out a FileInfo object's contents to an
+output stream.
+
+    std::string Moniker() const
+
+Returns the unique moniker for the given FileInfo object.  The moniker
+is determined by calling the broker of the containing Location.
+
+There are also a few properties available on each FileInfo object:
+
+    std::string  Name
+    Path         FullName       // This is computed during load/read
+    Location *   Repository
+    FileInfo *   Parent         // This is computed during load/read
+
+These represent the base name of the object, its full relative name
+within its Location, a pointer to the Location itself (called here the
+Repository), and the Parent directory of the object, which is null if
+its exists at the top level of the Location.
+
+Attic::Path
+-----------
+
+Wherever a filename might contain multiple parts, Attic uses a Path
+object.  This object is derived from C++'s standard std::string, but
+offers a few extra methods -- as well as special checks -- relating to
+file pathnames:
+
+    static Path         ExpandPath(const Path& path)
+    static Path         Combine(const Path& first, const Path& second)
+    static std::string  GetFileName(const Path& path)
+    static Path         GetDirectoryName(const Path& path)
+
+ExpandPath removes "." and ".." from the pathname, as well as
+resolving symbolic links and ~user directory references.  It returns
+the canoncial meaning of the input path.
+
+Combine joins two paths together, inserting a directory separator if
+necessary.  Within Attic internally, all pathnames are separated by a
+forward slash (/).  This might be altered by a Broker at the time that
+references to a particular filesystem are to be made.
+
+GetFileName and GetDirectoryName returns the base and containing parts
+of a pathname, respectively.
+
+    Path&  operator+=(const Path& other)
+
+This handy operator allows for a slightly more efficient form of the
+Combine method, since it does not rely as much on the creation of
+temporary Path objects.
+
+    std::string  FileName() const
+    Path         DirectoryName() const
+
+These return the base and directory names of the Path object they are
+called on.
+
+Attic::DateTime
+---------------
+
+Whenever the details of a file refer to time, a DateTime object is
+used.  DateTime uses enough resolution that no information is ever
+lost, no matter the filesystem.  It's interface supports basic math
+operations, and a few standard methods.  It also exposes the static
+member DateTime::Now, to represent the time when the current Attic
+session was started.  DateTime objects can be inserted into an output
+stream to report the associated date and time (down to the second).
+The method interface is:
+
+    std::tm *  localtime() const
+
+    int  year() const
+    int  month() const
+    int  day() const
+    int  wday() const
+    int  hour() const
+    int  min() const
+    int  sec() const
+
+    void  parse(std::istream& in)
+    void  write(std::ostream& out, const std::string& format = output_format)
+
+    std::string  to_string(const std::string& format = output_format)
+
+The default `output_format` for the methods above is:
+
+    %Y/%m/%d %H:%M:%S
+
+Attic::ChangeSet
+----------------
+
+When DataPool::ComputeChanges is called, it records all of the changes
+found in a ChangeSet object, which is passed by the user and modified
+by the calculation.  The ChangeSet maintins a reference to all of the
+changes, as well as offering methods for the determination of such
+changes.  Its interface is:
+
+    typedef std::map<std::string, StateChange *>   ChangesMap
+    typedef std::pair<std::string, StateChange *>  ChangesPair
+
+    typedef std::deque<StateChange *>  ChangesArray
+
+    ChangesMap  Changes
+
+    void PostChange(StateChange::Kind kind, FileInfo& entry, FileInfo& ancestor)
+    void CompareLocations(Location& origin, Location& ancestor)
+    void CompareFiles(FileInfo& entry, FileInfo& ancestor)
+
+Thus an example of usage might be to construct a ChangeSet, and to
+then call CompareLocations passing the two locations.  Once the call
+is complete, the property Changes would be a ChangeSet::ChangesMap
+mapping of relative pathnames (corresponding to FileInfo::FullName) to
+StateChange objects.
+
+Attic::StateChange
+------------------
+
+A StateChange object represents a single change affecting a single
+FileInfo object within a Location.  The possible change types are:
+
+    Add                 // file was added to the location
+    Remove              // file was removed from location
+    Update              // file's contents and attributes have changed
+    UpdateProps         // file's attributes have changed
+
+Each StateChange object also has a Next pointer, which if non-NULL
+reflects another change made to the same relative file -- always from
+within another Location.  This represent a conflict which should be
+resolved before applying changes to any other Locations.  That is,
+upon calling ApplyChanges, the Next pointer of all participating
+StateChange objects should be NULL.
+
+The interface for a StateChange is minimal:
+
+    StateChange *  Next           // if non-NULL, there is a conflicting change
+    Kind           ChangeKind     // the kind of change (see above)
+    FileInfo *     Item           // the related FileInfo object
+  
+    union {
+      FileInfo *      Ancestor    // if not an Add, this is the common ancestor
+      FileInfoArray * Duplicates  // if an Add, these have matching contents
+    };
+  
+    StateChange(Kind ChangeKind, FileInfo * Item, FileInfo * Ancestor)
+
+Create a StateChange of the given Kind, relating to the file Item, and
+to the file's common Ancestor.
+
+    void  Report(MessageLog& log) const
+    void  DebugPrint(MessageLog& log) const
+
+Report notifies the MessageLog of the type of change this is.  This
+can be used by the Resolver to show a list of proposed changes.
+DebugPrint dumps out information related to the state change object
+helpful for debugging.
+
+Attic::Regex
+------------
+
+Lastly, there is the Regex object, which abstracts the use of regular
+expression.  It is essentially a wrapper around boost::regex, but it
+knows the difference between an inclusion regexp and an exclusion
+regexp.  It has one property, one constructor, and one method of
+interest:
+
+    bool Exclude		// true if this is an exclusion pattern
+
+    explicit  Regex(const std::string& pattern, bool globStyle = false)
+    bool      IsMatch(const std::string&) const
+
+The constructor takes a regular expression as an input pattern and
+compiles it for later use.  If it begins with "-", it is an exclusion
+pattern.  If it begins with "+" or any other character, it is an
+inclusion pattern.  If globStyle is true, the pattern is a glob-style
+pattern that will be converted into a normal regular expression.  The
+method IsMatch compares the compiled regular expression to a
+std::string (or Path, since those are derived from std::string).
