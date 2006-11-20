@@ -1,8 +1,12 @@
 {
     IBClasses = (
         {CLASS = AtticApplication; LANGUAGE = ObjC; SUPERCLASS = NSApplication; }, 
-        {CLASS = AtticWindow; LANGUAGE = ObjC; SUPERCLASS = NSWindow; }, 
-        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            CLASS = MainWindowController; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSWindowController; 
+        }
     ); 
     IBVersion = 1; 
 }

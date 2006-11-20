@@ -1,4 +1,4 @@
-#import "AtticApplication.h"
+#import "Application.h"
 
 @implementation AtticApplication
 

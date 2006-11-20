@@ -308,21 +308,18 @@
 								<string>080E96DDFE201D6D7F000001</string>
 								<string>E2644B35053B69B200211256</string>
 								<string>1CC0EA4004350EF90041110B</string>
-								<string>29B97318FDCFA39411CA2CEA</string>
-								<string>29B97319FDCFA39411CA2CEA</string>
 								<string>1C77FABC04509CD000000102</string>
 								<string>1C3E0DCA080725EA00A55177</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>2</integer>
-									<integer>1</integer>
-									<integer>0</integer>
+									<integer>46</integer>
+									<integer>45</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 0}, {186, 642}}</string>
+							<string>{{0, 225}, {186, 642}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -369,7 +366,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>33E3FB590B1145FD000BC905</string>
+										<string>33E3FBA00B114A8B000BC905</string>
 										<key>history</key>
 										<array>
 											<string>33E3FB230B113F75000BC905</string>
@@ -562,7 +559,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>185681405.213503</real>
+	<real>185682571.99474201</real>
 	<key>ToolbarDisplayMode</key>
 	<integer>1</integer>
 	<key>ToolbarIsVisible</key>
@@ -577,10 +574,10 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1C0AD2B3069F1EA900FABCE6</string>
 		<string>33E3FAD20B113A40000BC905</string>
 		<string>33E3FA820B113904000BC905</string>
 		<string>/Volumes/Users/johnw/src/Attic/Attic.xcodeproj</string>
+		<string>1C0AD2B3069F1EA900FABCE6</string>
 	</array>
 	<key>WindowString</key>
 	<string>99 153 800 701 0 0 1440 878 </string>
@@ -604,7 +601,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>DateTime.cc</string>
+								<string>Application.mm</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -1028,7 +1025,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C0AD2B3069F1EA900FABCE6</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
