@@ -59,7 +59,7 @@ md5sum_t FileInfo::CurrentChecksum() const
   return temp;
 }
 
-bool FileInfo::ReadAttributes()
+void FileInfo::ReadAttributes()
 {
   if (! HasFlags(FILEINFO_READATTR)) {
     Repository->SiteBroker->ReadAttributes(*this);

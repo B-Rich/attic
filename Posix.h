@@ -123,8 +123,8 @@ public:
   virtual void Copy(const FileInfo& entry, const Path& dest);
   virtual void Move(FileInfo& entry, const Path& dest);
 
-  virtual Path GetSignature(const FileInfo& entry) const {}
-  virtual Path CreateDelta(const FileInfo& entry, const Path& sigfile) {}
+  virtual Path GetSignature(const FileInfo& entry) const { return Path(); }
+  virtual Path CreateDelta(const FileInfo& entry, const Path& sigfile) { return Path(); }
   virtual void ApplyDelta(const FileInfo& entry, const Path& delta) {}
 };
 

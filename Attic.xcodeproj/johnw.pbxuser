@@ -51,6 +51,7 @@
 			33E3FABA0B1139C8000BC905 /* PBXTextBookmark */ = 33E3FABA0B1139C8000BC905 /* PBXTextBookmark */;
 			33E3FABB0B1139C8000BC905 /* PBXTextBookmark */ = 33E3FABB0B1139C8000BC905 /* PBXTextBookmark */;
 			33E3FABC0B1139C8000BC905 /* PBXTextBookmark */ = 33E3FABC0B1139C8000BC905 /* PBXTextBookmark */;
+			33E3FAD10B113A40000BC905 /* PBXTextBookmark */ = 33E3FAD10B113A40000BC905 /* PBXTextBookmark */;
 		};
 		sourceControlManager = 33E3FA610B113885000BC905 /* Source Control */;
 		userBuildSettings = {
@@ -95,16 +96,18 @@
 	};
 	33E3FA6A0B1138D6000BC905 /* DateTime.cc */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {536, 3360}}";
+			sepNavIntBoundsRect = "{{0, 0}, {711, 3360}}";
 			sepNavSelRange = "{1016, 0}";
-			sepNavVisRect = "{{0, 642}, {459, 186}}";
+			sepNavVisRect = "{{0, 521}, {711, 429}}";
+			sepNavWindowFrame = "{{38, 294}, {750, 558}}";
 		};
 	};
 	33E3FA6B0B1138D6000BC905 /* FileInfo.cc */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {711, 3318}}";
-			sepNavSelRange = "{1273, 0}";
+			sepNavSelRange = "{1269, 32}";
 			sepNavVisRect = "{{0, 731}, {711, 429}}";
+			sepNavWindowFrame = "{{61, 273}, {750, 558}}";
 		};
 	};
 	33E3FA9A0B11397D000BC905 /* Posix.h */ = {
@@ -115,8 +118,9 @@
 		sourceTree = "<absolute>";
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {711, 1876}}";
-			sepNavSelRange = "{3991, 0}";
+			sepNavSelRange = "{3827, 76}";
 			sepNavVisRect = "{{0, 1447}, {711, 429}}";
+			sepNavWindowFrame = "{{15, 315}, {750, 558}}";
 		};
 	};
 	33E3FA9B0B11397D000BC905 /* PBXTextBookmark */ = {
@@ -232,6 +236,16 @@
 		vrLoc = 981;
 	};
 	33E3FABC0B1139C8000BC905 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 33E3FA6A0B1138D6000BC905 /* DateTime.cc */;
+		name = "DateTime.cc: month_days";
+		rLen = 0;
+		rLoc = 1016;
+		rType = 0;
+		vrLen = 373;
+		vrLoc = 981;
+	};
+	33E3FAD10B113A40000BC905 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 33E3FA6A0B1138D6000BC905 /* DateTime.cc */;
 		name = "DateTime.cc: month_days";

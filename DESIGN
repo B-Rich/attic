@@ -194,6 +194,13 @@ It might be backed by a database, or a file system, or even a remote
 file system.  The job of retrieving file information from some kind of
 data backing is done by the location's Broker.
 
+All filesystem interaction is done in a Broker.  Interpretation of
+information gathered by a Broker is done by its corresponding FileInfo
+sub-type.  For example, the PosixVolumeBroker makes all of the kernel
+calls necessary to extract and apply information to a POSIX
+filesystem.  The PosixFileInfo, on the other hand, interprets and
+provides the information needed to make these calls.
+
 The class Attic::Broker is actually an abstract class.  In order to
 create a Location -- which must reference a broker -- the caller has
 to decide which actual Broker class can provide details about that

@@ -124,7 +124,7 @@ public:
   virtual DateTime LastWriteTime() const = 0;
   virtual void SetLastWriteTime(const DateTime& when) = 0;
 
-  bool ReadAttributes();
+  void ReadAttributes();
   bool Exists() const;
 
   virtual Kind FileKind() const = 0;

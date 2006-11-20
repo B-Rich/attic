@@ -49,9 +49,6 @@ const char * DateTime::formats[] = {
   NULL
 };
 
-static std::time_t base = -1;
-static int base_year = -1;
-
 static const int month_days[12] = {
   31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
