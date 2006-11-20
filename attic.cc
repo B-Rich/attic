@@ -1,4 +1,5 @@
 #include "Manager.h"
+#include "Posix.h"
 
 #include <iostream>
 
@@ -17,7 +18,7 @@ int main(int argc, char *args[])
 
   for (int i = 1; i < argc; i++) {
     if (args[i][0] != '-') {
-      Broker * broker = new VolumeBroker(Path::ExpandPath(args[i]));
+      Broker * broker = new PosixVolumeBroker(Path::ExpandPath(args[i]));
       pool->Locations.push_back(new Location(broker));
       continue;
     }
@@ -27,6 +28,7 @@ int main(int argc, char *args[])
       optionTemplate.PreserveChanges = true;
       break;
 
+#if 0
     case '>': {
       DatabaseBroker db(Path::ExpandPath(args[++i]));
       std::cout << "Dumping state database '" << db.DatabasePath << "':"
@@ -34,6 +36,7 @@ int main(int argc, char *args[])
       db.Dump(std::cout, optionTemplate.VerboseLogging);
       return 0;
     }
+#endif
 
     case 'D':
       DebugMode = true;
@@ -52,7 +55,6 @@ int main(int argc, char *args[])
       if (i + 1 < argc)
 	generations = Path::ExpandPath(args[++i]);
       break;
-#endif
 
     case 'd':
       if (i + 1 < argc) {
@@ -62,14 +64,14 @@ int main(int argc, char *args[])
 	broker->Load();
       }
       break;
+#endif
 
     case 'n':
       pool->LoggingOnly = true;
       break;
 
     case 'c':
-      // compute checksums...
-      optionTemplate.TrustTimestamps = false;
+      optionTemplate.UseChecksums = true;
       break;
 
     case 'x':
@@ -79,6 +81,7 @@ int main(int argc, char *args[])
       }
       break;
 
+#if 0
     case 'X':
       if (i + 1 < argc) {
 	FileInfo info(args[i + 1]);
@@ -93,6 +96,7 @@ int main(int argc, char *args[])
 	i++;
       }
       break;
+#endif
     }
   }
 

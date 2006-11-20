@@ -23,15 +23,16 @@ void DatabaseBroker::Sync()
 
 void DatabaseBroker::Load()
 {
-  FileInfo info(DatabasePath, NULL, Repository);
-  if (! info.Exists())
+#if 0
+  if (! File::Exists(DatabasePath))
     return;
 
-  char * data = new char[info.Length() + 1];
+  int    len  = File::Length(DatabasePath);
+  char * data = new char[len + 1];
 
   std::ifstream fin(DatabasePath.c_str());
-  fin.read(data, info.Length());
-  if (fin.gcount() != info.Length()) {
+  fin.read(data, len);
+  if (fin.gcount() != len) {
     delete[] data;
     throw Exception("Failed to read database file '" + DatabasePath + "'");
   }
@@ -48,10 +49,12 @@ void DatabaseBroker::Load()
     throw;
   }
   delete[] data;
+#endif
 }
 
 void DatabaseBroker::Save()
 {
+#if 0
   std::ofstream fout(DatabasePath.c_str());
   write_binary_long(fout, BINARY_VERSION);
   if (Root)
@@ -59,26 +62,53 @@ void DatabaseBroker::Save()
   fout.close();
 
   Dirty = false;
+#endif
 }
 
 void DatabaseBroker::Dump(std::ostream& out, bool verbose)
 {
   if (Root)
-    Root->DumpTo(out, verbose);
+    Root->Dump(out, verbose);
 }
 
-void VolumeBroker::ReadFileProperties(const Path& subpath, FileInfo * file)
+#if 0
+FileInfo * FileInfo::ReadFrom(char *& data, FileInfo * parent,
+			      Location * repository)
 {
-  Path Pathname(Path::Combine(CurrentPath, subpath));
+  FileInfo * entry = new FileInfo(repository);
 
-  if (lstat(Pathname.c_str(), &file->info) == -1) {
-    if (errno == ENOENT) {
-      file->flags |= FILEINFO_DIDSTAT;
-      return;
-    }
-    throw Exception("Failed to stat '" + Pathname + "'");
+  read_binary_string(data, entry->Name);
+  read_binary_number(data, static_cast<FileInfoData&>(*entry));
+
+  entry->Parent = parent;
+  if (parent) {
+    entry->SetPath(Path::Combine(parent->FullName, entry->Name));
+    parent->AddChild(entry);
+  } else {
+    entry->SetPath(entry->Name);
   }
-  file->flags |= FILEINFO_DIDSTAT | FILEINFO_EXISTS;
+
+  if (entry->IsDirectory()) {
+    int children = read_binary_long<int>(data);
+    for (int i = 0; i < children; i++)
+      ReadFrom(data, entry, repository);
+  }
+  return entry;
 }
+
+void FileInfo::WriteTo(std::ostream& out) const
+{
+  write_binary_string(out, Name);
+  write_binary_number(out, static_cast<const FileInfoData&>(*this));
+
+  if (IsDirectory()) {
+    write_binary_long(out, (int)ChildrenSize());
+    for (ChildrenMap::iterator i = ChildrenBegin();
+	 i != ChildrenEnd();
+	 i++)
+      (*i).second->WriteTo(out);
+  }
+}
+#endif
 
 } // namespace Attic

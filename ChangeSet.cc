@@ -39,8 +39,8 @@ void ChangeSet::PostRemoveChange(FileInfo *	    entryParent,
 				 FileInfo *	    ancestorChild)
 {
   FileInfo * missingChild =
-    new FileInfo(Path::Combine(entryParent->FullName, childName),
-		 entryParent, entryParent->Repository);
+    entryParent->Repository->SiteBroker->CreateFileInfo
+      (Path::Combine(entryParent->FullName, childName), entryParent);
 
   if (ancestorChild->IsDirectory())
     for (FileInfo::ChildrenMap::const_iterator
@@ -71,31 +71,26 @@ void ChangeSet::CompareFiles(FileInfo * entry, FileInfo * ancestor)
     PostUpdateChange(entry, ancestor);
     updateRegistered = true;
   }
-  else if (entry->IsRegularFile()) {
-    if (entry->Length() != ancestor->Length()) {
-      PostUpdateChange(entry, ancestor);
-      updateRegistered = true;
-    }
-    else if (! entry->Repository->TrustLengthOnly) {
-      if (entry->LastWriteTime() != ancestor->LastWriteTime() ||
-	  (! entry->Repository->TrustTimestamps &&
-	   entry->Checksum() != ancestor->Checksum())) {
+  else if (entry->Exists()) {
+    if (entry->IsRegularFile()) {
+      if (entry->Length() != ancestor->Length()) {
+	PostUpdateChange(entry, ancestor);
+	updateRegistered = true;
+      }
+      else if (! entry->Repository->TrustLengthOnly &&
+	       (entry->LastWriteTime() != ancestor->LastWriteTime() ||
+		(entry->Repository->UseChecksums &&
+		 entry->Checksum() != ancestor->Checksum()))) {
 	PostUpdateChange(entry, ancestor);
 	updateRegistered = true;
       }
     }
-  }
-  else if (entry->Exists() &&
-	   entry->LastWriteTime() != ancestor->LastWriteTime()) {
-    PostUpdatePropsChange(entry, ancestor);
-    updateRegistered = true;
-  }
 
-  if (! updateRegistered && entry->Exists() &&
-      (entry->Permissions() != ancestor->Permissions() ||
-       entry->OwnerId()     != ancestor->OwnerId()	||
-       entry->GroupId()     != ancestor->GroupId()))
-    PostUpdatePropsChange(entry, ancestor);
+    if (! updateRegistered && ! entry->CompareAttributes(*ancestor)) {
+      PostUpdatePropsChange(entry, ancestor);
+      updateRegistered = true;
+    }
+  }
 
   if (! entry->IsDirectory())
     return;

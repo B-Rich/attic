@@ -53,7 +53,6 @@ public:
   // representing this change in state.
   mutable ChangeSet * CurrentChanges;
 
-  void Sync() const { SiteBroker->Sync(); }
   void ApplyChanges(const ChangeSet& changeSet);
 
   std::vector<Regex *> Regexps;
@@ -67,7 +66,7 @@ public:
   bool PreserveChanges;		// -b if true, location changes are preserved
   bool CaseSensitive;		// -c if true, file system is case sensitive
   bool TrustLengthOnly;		//    if true, only check files based on size
-  bool TrustTimestamps;		//    if false, checksum to detect changes (-c)
+  bool UseChecksums;		//    if true, checksum to detect changes (-c)
   bool CopyByOverwrite;		// -O if true, copy directly over the target
   bool CopyWholeFiles;		//    if true, do not use the rsync algorithm
   bool ChecksumVerify;		// -V if true, do a checksum after every copy

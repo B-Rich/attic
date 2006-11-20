@@ -5,7 +5,8 @@ attic_SOURCES = \
 	attic.cc binary.cc md5.c \
 	FileInfo.cc Path.cc DateTime.cc Regex.cc \
 	ChangeSet.cc StateChange.cc \
-	DataPool.cc Location.cc Broker.cc
+	DataPool.cc Location.cc \
+	Broker.cc Posix.cc
 
 if DEBUG
 attic_CXXFLAGS += -DDEBUG_LEVEL=4

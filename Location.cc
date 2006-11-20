@@ -11,7 +11,7 @@ Location::Location(Broker * _SiteBroker)
     PreserveChanges(false),
     CaseSensitive(true),
     TrustLengthOnly(false),
-    TrustTimestamps(true),
+    UseChecksums(true),
     CopyByOverwrite(false),
     CopyWholeFiles(false),
     ChecksumVerify(false),
@@ -90,7 +90,7 @@ void Location::CopyOptions(const Location& optionTemplate)
   PreserveChanges     = optionTemplate.PreserveChanges;
   CaseSensitive	      = optionTemplate.CaseSensitive;
   TrustLengthOnly     = optionTemplate.TrustLengthOnly;
-  TrustTimestamps     = optionTemplate.TrustTimestamps;
+  UseChecksums        = optionTemplate.UseChecksums;
   CopyByOverwrite     = optionTemplate.CopyByOverwrite;
   CopyWholeFiles      = optionTemplate.CopyWholeFiles;
   ChecksumVerify      = optionTemplate.ChecksumVerify;
@@ -170,39 +170,38 @@ void Location::Initialize()
 void Location::ApplyChange(MessageLog * log, const StateChange& change,
 			   const ChangeSet& changeSet)
 {
-  Path	   targetPath(change.Item->FullName);
-  FileInfo targetInfo(targetPath);
+  FileInfo * targetInfo(Root()->FindOrCreateMember(change.Item->FullName));
 
   std::string label;
   switch (change.ChangeKind) {
   case StateChange::Add:
     if (change.Item->IsDirectory()) {
-      if (targetInfo.Exists()) {
-	if (targetInfo.IsDirectory())
+      if (targetInfo->Exists()) {
+	if (targetInfo->IsDirectory())
 	  return;
-	targetInfo.Delete();
+	targetInfo->Delete();
 	if (log)
-	  LOG(*log, Message, "D " << targetPath);
+	  LOG(*log, Message, "D " << targetInfo->Moniker());
       }
-      Directory::CreateDirectory(targetPath);
+      targetInfo->Create();
       label = "c ";
     }
     else if (change.Item->IsRegularFile()) {
-      if (targetInfo.Exists()) {
-	if (targetInfo.IsRegularFile() &&
-	    targetInfo.Checksum() == change.Item->Checksum()) {
+      if (targetInfo->Exists()) {
+	if (targetInfo->IsRegularFile() &&
+	    targetInfo->Checksum() == change.Item->Checksum()) {
 	  ChangeSet ignoredChanges;
-	  ignoredChanges.CompareFiles(change.Item, &targetInfo);
+	  ignoredChanges.CompareFiles(change.Item, targetInfo);
 	  if (! ignoredChanges.Changes.empty()) {
-	    change.Item->CopyAttributes(targetPath);
+	    change.Item->CopyAttributes(targetInfo->Pathname);
 	    label = "p ";
 	    break;
 	  }
 	  return;
 	}
-	targetInfo.Delete();
+	targetInfo->Delete();
 	if (log)
-	  LOG(*log, Message, "D " << targetPath);
+	  LOG(*log, Message, "D " << targetInfo->Moniker());
       }
 
       // If Duplicate is non-NULL (and this applies only for Add
@@ -232,22 +231,19 @@ void Location::ApplyChange(MessageLog * log, const StateChange& change,
 	      break;
 	  }
 
+	targetInfo->CreateDirectory();
 	if (markedForDeletion) {
-	  Directory::CreateDirectory(targetPath.DirectoryName());
-	  File::Move(Duplicate->FullName, targetPath);
+	  Duplicate->Move(targetInfo->Pathname);
 	  label = "m ";
 	  break;
 	} else {
-	  // jww (2006-11-09): Do this through the broker, since it
-	  // must happen remotely
-	  Directory::CreateDirectory(targetPath.DirectoryName());
-	  File::Copy(Duplicate->FullName, targetPath);
+	  Duplicate->Copy(targetInfo->Pathname);
 	  label = "u ";
 	  break;
 	}
       }
 
-      File::Copy(change.Item->Pathname, targetPath);
+      change.Item->Copy(targetInfo->Pathname);
       label = "U ";
     }
     else {
@@ -256,25 +252,21 @@ void Location::ApplyChange(MessageLog * log, const StateChange& change,
     break;
 
   case StateChange::Remove:
-    if (targetInfo.Exists()) {
-      if (targetInfo.IsDirectory())
-	Directory::Delete(targetPath);
-      else
-	File::Delete(targetPath);
-    }
+    if (targetInfo->Exists())
+      targetInfo->Delete();
     label = "D ";
     break;
 
   case StateChange::Update:
     if (change.Item->IsRegularFile())
-      File::Copy(change.Item->Pathname, targetPath);
+      change.Item->Copy(targetInfo->Pathname);
     else
       assert(0);
     label = "P ";
     break;
 
   case StateChange::UpdateProps:
-    change.Item->CopyAttributes(targetPath);
+    change.Item->CopyAttributes(targetInfo->Pathname);
     label = "p ";
     break;
 
@@ -284,7 +276,7 @@ void Location::ApplyChange(MessageLog * log, const StateChange& change,
   }
 
   if (log)
-    LOG(*log, Message, label << SiteBroker->Moniker(change.Item->FullName));
+    LOG(*log, Message, label << change.Item->Moniker());
 }
 
 void Location::RegisterChecksums(FileInfo * entry)
