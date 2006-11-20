@@ -7,8 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		331DD6770B116BD000B40561 /* TextViewStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */; };
+		3391F37F0B1164900094EDFC /* FlatDB.cc in Sources */ = {isa = PBXBuildFile; fileRef = 3391F37D0B1164900094EDFC /* FlatDB.cc */; };
+		3391F3CA0B1167850094EDFC /* Invoke.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3391F3C90B1167850094EDFC /* Invoke.cpp */; };
+		3391F3F50B11681A0094EDFC /* libboost_regex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3391F3F30B11681A0094EDFC /* libboost_regex.a */; };
+		3391F3F60B11681A0094EDFC /* libboost_thread.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3391F3F40B11681A0094EDFC /* libboost_thread.a */; };
 		33E3FA740B1138D6000BC905 /* binary.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA660B1138D6000BC905 /* binary.cc */; };
-		33E3FA750B1138D6000BC905 /* Broker.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA670B1138D6000BC905 /* Broker.cc */; };
 		33E3FA760B1138D6000BC905 /* ChangeSet.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA680B1138D6000BC905 /* ChangeSet.cc */; };
 		33E3FA770B1138D6000BC905 /* DataPool.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA690B1138D6000BC905 /* DataPool.cc */; };
 		33E3FA780B1138D6000BC905 /* DateTime.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA6A0B1138D6000BC905 /* DateTime.cc */; };
@@ -37,8 +41,15 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* Attic_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attic_Prefix.pch; sourceTree = "<group>"; };
+		331DD6750B116BD000B40561 /* TextViewStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewStream.h; sourceTree = "<group>"; };
+		331DD6760B116BD000B40561 /* TextViewStream.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = TextViewStream.mm; sourceTree = "<group>"; };
+		3391F37D0B1164900094EDFC /* FlatDB.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FlatDB.cc; sourceTree = "<group>"; };
+		3391F37E0B1164900094EDFC /* FlatDB.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FlatDB.h; sourceTree = "<group>"; };
+		3391F3C80B1167850094EDFC /* Invoke.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Invoke.h; sourceTree = "<group>"; };
+		3391F3C90B1167850094EDFC /* Invoke.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Invoke.cpp; sourceTree = "<group>"; };
+		3391F3F30B11681A0094EDFC /* libboost_regex.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_regex.a; path = /usr/local/lib/libboost_regex.a; sourceTree = "<absolute>"; };
+		3391F3F40B11681A0094EDFC /* libboost_thread.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_thread.a; path = /usr/local/lib/libboost_thread.a; sourceTree = "<absolute>"; };
 		33E3FA660B1138D6000BC905 /* binary.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = binary.cc; path = ../attic/binary.cc; sourceTree = SOURCE_ROOT; };
-		33E3FA670B1138D6000BC905 /* Broker.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Broker.cc; path = ../attic/Broker.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA680B1138D6000BC905 /* ChangeSet.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ChangeSet.cc; path = ../attic/ChangeSet.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA690B1138D6000BC905 /* DataPool.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DataPool.cc; path = ../attic/DataPool.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA6A0B1138D6000BC905 /* DateTime.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DateTime.cc; path = ../attic/DateTime.cc; sourceTree = SOURCE_ROOT; };
@@ -82,6 +93,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
+				3391F3F50B11681A0094EDFC /* libboost_regex.a in Frameworks */,
+				3391F3F60B11681A0094EDFC /* libboost_thread.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,10 +108,11 @@
 				33E3FB320B11443F000BC905 /* MainWindowController.mm */,
 				33E3FB460B1144EF000BC905 /* Application.h */,
 				33E3FB470B1144F0000BC905 /* Application.mm */,
+				3391F37D0B1164900094EDFC /* FlatDB.cc */,
+				3391F37E0B1164900094EDFC /* FlatDB.h */,
 				33E3FB040B113EA9000BC905 /* Broker.h */,
 				33E3FB050B113EA9000BC905 /* ChangeSet.h */,
 				33E3FB060B113EA9000BC905 /* DataPool.h */,
-				33E3FA670B1138D6000BC905 /* Broker.cc */,
 				33E3FA680B1138D6000BC905 /* ChangeSet.cc */,
 				33E3FA690B1138D6000BC905 /* DataPool.cc */,
 				33E3FB090B113EA9000BC905 /* FileInfo.h */,
@@ -126,6 +140,8 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3391F3F30B11681A0094EDFC /* libboost_regex.a */,
+				3391F3F40B11681A0094EDFC /* libboost_thread.a */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 			);
 			name = "Linked Frameworks";
@@ -192,6 +208,10 @@
 				33E3FA660B1138D6000BC905 /* binary.cc */,
 				33E3FA6D0B1138D6000BC905 /* md5.c */,
 				33E3FA6E0B1138D6000BC905 /* md5main.c */,
+				3391F3C80B1167850094EDFC /* Invoke.h */,
+				3391F3C90B1167850094EDFC /* Invoke.cpp */,
+				331DD6750B116BD000B40561 /* TextViewStream.h */,
+				331DD6760B116BD000B40561 /* TextViewStream.mm */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -251,7 +271,6 @@
 			files = (
 				8D11072D0486CEB800E47090 /* main.m in Sources */,
 				33E3FA740B1138D6000BC905 /* binary.cc in Sources */,
-				33E3FA750B1138D6000BC905 /* Broker.cc in Sources */,
 				33E3FA760B1138D6000BC905 /* ChangeSet.cc in Sources */,
 				33E3FA770B1138D6000BC905 /* DataPool.cc in Sources */,
 				33E3FA780B1138D6000BC905 /* DateTime.cc in Sources */,
@@ -265,6 +284,9 @@
 				33E3FA800B1138D6000BC905 /* StateChange.cc in Sources */,
 				33E3FB330B11443F000BC905 /* MainWindowController.mm in Sources */,
 				33E3FB480B1144F0000BC905 /* Application.mm in Sources */,
+				3391F37F0B1164900094EDFC /* FlatDB.cc in Sources */,
+				3391F3CA0B1167850094EDFC /* Invoke.cpp in Sources */,
+				331DD6770B116BD000B40561 /* TextViewStream.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

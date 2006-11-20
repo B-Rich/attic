@@ -4,8 +4,6 @@ namespace Attic {
 
 DataPool::~DataPool()
 {
-  if (CommonAncestor)
-    delete CommonAncestor;
   if (AllChanges)
     delete AllChanges;
     
@@ -24,7 +22,7 @@ void DataPool::ComputeChanges()
   for (std::vector<Location *>::iterator i = Locations.begin();
        i != Locations.end();
        i++)
-    if ((*i)->PreserveChanges)
+    if (*i != CommonAncestor && (*i)->PreserveChanges)
       AllChanges->CompareLocations(*i, CommonAncestor);
 }
 
@@ -39,7 +37,6 @@ void DataPool::ResolveConflicts()
 
 void DataPool::ApplyChanges(MessageLog& log)
 {
-#if 0
   if (! AllChanges)
     return;
 
@@ -68,7 +65,13 @@ void DataPool::ApplyChanges(MessageLog& log)
 	continue;
 
       if ((*j)->ChangeKind == StateChange::Add) {
-	(*j)->Duplicates = (*i)->ExistsAtLocation((*j)->Item, CommonAncestor);
+	// jww (2006-11-19): This gets complicated if the remote
+	// location has changes.  We need to check the common ancestor
+	// first, then see if any of those entries have been deleted
+	// or changed by the remote site.  Also, we need to check if
+	// files have been created at the remote site which are now
+	// equivalent.
+	(*j)->Duplicates = CommonAncestor->ExistsAtLocation((*j)->Item);
 	if ((*j)->Duplicates) {
 	  thisChangesArray.push_front(*j);
 	  continue;
@@ -90,16 +93,6 @@ void DataPool::ApplyChanges(MessageLog& log)
 	  (*i)->ApplyChange(&log, *ptr, *changeSet);
 	}
   }
-
-  // Reflect all of the changes in the ancestor map
-  if (! LoggingOnly && CommonAncestor) {
-    for (ChangeSet::ChangesArray::iterator j = changesArray.begin();
-	 j != changesArray.end();
-	 j++)
-      CommonAncestor->ApplyChange(NULL, **j, *AllChanges);
-    CommonAncestor->Sync();
-  }      
-#endif
 }
 
 } // namespace Attic

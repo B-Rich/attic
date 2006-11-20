@@ -21,8 +21,8 @@ class ChangeSet
     PostChange(StateChange::Update, entry, ancestor);
   }
 
-  inline void PostUpdatePropsChange(FileInfo * entry, FileInfo * ancestor) {
-    PostChange(StateChange::UpdateProps, entry, ancestor);
+  inline void PostUpdateAttrsChange(FileInfo * entry, FileInfo * ancestor) {
+    PostChange(StateChange::UpdateAttrs, entry, ancestor);
   }
 
 public:

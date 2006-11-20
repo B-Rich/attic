@@ -11,7 +11,7 @@ class StateChange
 {
 public:
   enum Kind {
-    Nothing, Add, Remove, Update, UpdateProps
+    Nothing, Add, Remove, Update, UpdateAttrs
   };
 
   StateChange *	Next;

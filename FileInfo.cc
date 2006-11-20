@@ -31,6 +31,7 @@ void FileInfo::SetDetails(const Path& _FullName, FileInfo * _Parent,
   if (Parent)
     Parent->InsertChild(this);
 
+  Repository = _Repository;
   if (Repository)
     Pathname = Repository->SiteBroker->FullPath(FullName);
   else
@@ -57,6 +58,28 @@ md5sum_t FileInfo::CurrentChecksum() const
   md5sum_t temp;
   Repository->SiteBroker->ComputeChecksum(FullName, temp);
   return temp;
+}
+
+void * FileInfo::GetAttribute(const std::string& name) const
+{
+  if (Attributes) { 
+    AttributesMap::const_iterator i = Attributes->find(name);
+    if (i != Attributes->end())
+      return (*i).second;
+  }
+  return NULL;
+}
+
+void FileInfo::SetAttribute(const std::string& name, void * data)
+{
+  AttributesMap::iterator i = Attributes->find(name);
+  if (i != Attributes->end()) {
+    (*i).second = data;
+  } else {
+    std::pair<AttributesMap::iterator, bool> result =
+      Attributes->insert(AttributesPair(name, data));
+    assert(result.second);
+  }
 }
 
 void FileInfo::ReadAttributes()

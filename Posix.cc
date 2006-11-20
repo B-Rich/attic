@@ -357,7 +357,7 @@ void PosixVolumeBroker::SetLinkTarget(const Path& path, const Path& dest)
     throw Exception("Failed to create symbol link '" + path + "' to '" + dest + "'");
 }
 
-void PosixVolumeBroker::CreateFile(const PosixFileInfo& entry)
+void PosixVolumeBroker::CreateFile(PosixFileInfo& entry)
 {
 }
 
@@ -414,6 +414,16 @@ void PosixVolumeBroker::MoveDirectory(const PosixFileInfo& entry,
 {
 }
 
+unsigned long long PosixVolumeBroker::Length(const Path& path) const
+{
+  struct stat info;
+
+  if (stat(path.c_str(), &info) == -1)
+    throw Exception("Failed to stat '" + path + "'");
+  else
+    return info.st_size;
+}
+
 bool PosixVolumeBroker::Exists(const Path& path) const
 {
   return access(path.c_str(), F_OK) != -1 || errno != ENOENT;
@@ -443,7 +453,7 @@ void PosixVolumeBroker::ReadAttributes(FileInfo& entry) const
       posixEntry.SetFlags(FILEINFO_READATTR);
       return;
     }
-    throw Exception("Failed to stat '" + posixEntry.Pathname + "'");
+    throw Exception("Failed to lstat '" + posixEntry.Pathname + "'");
   }
 
   posixEntry.SetFlags(FILEINFO_READATTR | FILEINFO_EXISTS);
@@ -560,51 +570,53 @@ void PosixVolumeBroker::CreateDirectory(const Path& path)
       throw Exception("Failed to create directory '" + path + "'");
 }
 
-void PosixVolumeBroker::Create(const FileInfo& entry)
+void PosixVolumeBroker::Create(FileInfo& entry)
 {
+  if (entry.IsDirectory()) {
+    if (! entry.Exists())
+      CreateDirectory(entry.Pathname);
+  }
+  else if (! entry.Exists()) {
+    CreateFile(static_cast<PosixFileInfo&>(entry));
+  }
+
+  entry.SetFlags(FILEINFO_EXISTS);
 }
 
-void PosixVolumeBroker::Delete(const FileInfo& entry)
+void PosixVolumeBroker::Delete(FileInfo& entry)
 {
-#if 0
-  if (IsDirectory()) {
-    for (ChildrenMap::iterator i = ChildrenBegin();
-	 i != ChildrenEnd();
+  if (entry.IsDirectory()) {
+    for (FileInfo::ChildrenMap::iterator i = entry.ChildrenBegin();
+	 i != entry.ChildrenEnd();
 	 i++)
       (*i).second->Delete();
-    Directory::Delete(FullName);
+    DeleteDirectory(entry.Pathname);
   }
-  else if (Exists() && ! IsVirtual()) {
-    File::Delete(FullName);
+  else if (! entry.IsVirtual() && entry.Exists()) {
+    DeleteFile(entry.Pathname);
   }
-  ClearFlags(FILEINFO_EXISTS);
-#endif
+
+  entry.ClearFlags(FILEINFO_EXISTS);
 }
 
 void PosixVolumeBroker::Copy(const FileInfo& entry, const Path& dest)
 {
-#if 0
-  if (IsRegularFile()) {
-    File::Copy(Pathname, dest);
-  }
-  else if (IsDirectory()) {
-    Directory::CreateDirectory(dest);
-
-    for (ChildrenMap::iterator i = ChildrenBegin();
-	 i != ChildrenEnd();
-	 i++) {
-      assert((*i).first == (*i).second->Name);
-      (*i).second->Copy(Path::Combine(dest, (*i).first));
-    }
-  }
-#endif
+  if (entry.IsRegularFile())
+    CopyFile(static_cast<const PosixFileInfo&>(entry), dest);
+  else if (entry.IsDirectory())
+    CopyDirectory(static_cast<const PosixFileInfo&>(entry), dest);
+  else
+    assert(0);
 }
 
 void PosixVolumeBroker::Move(FileInfo& entry, const Path& dest)
 {
-#if 0
-  File::Move(Pathname, dest);
-#endif
+  if (entry.IsRegularFile())
+    MoveFile(static_cast<PosixFileInfo&>(entry), dest);
+  else if (entry.IsDirectory())
+    MoveDirectory(static_cast<PosixFileInfo&>(entry), dest);
+  else
+    assert(0);
 }
 
 } // namespace Attic

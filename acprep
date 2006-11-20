@@ -35,7 +35,7 @@ fi
 if [ "$1" = "--debug" ]; then
     shift 1
     ./configure CPPFLAGS="$INCDIRS" LDFLAGS="$LIBDIRS" \
-	CXXFLAGS="$CXXFLAGS -g" $SWITCHES
+	CXXFLAGS="$CXXFLAGS -g" $SWITCHES --enable-debug
 else
     ./configure CPPFLAGS="$INCDIRS" LDFLAGS="$LIBDIRS" $SWITCHES
 fi

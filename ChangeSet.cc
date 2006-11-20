@@ -87,7 +87,7 @@ void ChangeSet::CompareFiles(FileInfo * entry, FileInfo * ancestor)
     }
 
     if (! updateRegistered && ! entry->CompareAttributes(*ancestor)) {
-      PostUpdatePropsChange(entry, ancestor);
+      PostUpdateAttrsChange(entry, ancestor);
       updateRegistered = true;
     }
   }
@@ -95,7 +95,7 @@ void ChangeSet::CompareFiles(FileInfo * entry, FileInfo * ancestor)
   if (! entry->IsDirectory())
     return;
 
-  bool updateProps = false;
+  bool updateAttrs = false;
 
   for (FileInfo::ChildrenMap::iterator i = entry->ChildrenBegin();
        i != entry->ChildrenEnd();
@@ -106,7 +106,7 @@ void ChangeSet::CompareFiles(FileInfo * entry, FileInfo * ancestor)
       CompareFiles((*i).second, ancestorChild);
     } else {
       PostAddChange((*i).second);
-      updateProps = true;
+      updateAttrs = true;
     }
   }
 
@@ -118,12 +118,12 @@ void ChangeSet::CompareFiles(FileInfo * entry, FileInfo * ancestor)
     }
     else if (entry->FindChild((*i).first) == NULL) {
       PostRemoveChange(entry, (*i).first, (*i).second);
-      updateProps = true;
+      updateAttrs = true;
     }
   }
 
-  if (updateProps && ! updateRegistered)
-    PostUpdatePropsChange(entry, ancestor);
+  if (updateAttrs && ! updateRegistered)
+    PostUpdateAttrsChange(entry, ancestor);
 }
 
 bool ChangeSet::ChangeComparer::operator()
@@ -136,11 +136,11 @@ bool ChangeSet::ChangeComparer::operator()
       right->ChangeKind == StateChange::Remove)
     return false;
 
-  if (left->ChangeKind == StateChange::UpdateProps &&
-      ! right->ChangeKind == StateChange::UpdateProps)
+  if (left->ChangeKind == StateChange::UpdateAttrs &&
+      ! right->ChangeKind == StateChange::UpdateAttrs)
     return false;
-  if (! left->ChangeKind == StateChange::UpdateProps
-      && right->ChangeKind == StateChange::UpdateProps)
+  if (! left->ChangeKind == StateChange::UpdateAttrs
+      && right->ChangeKind == StateChange::UpdateAttrs)
     return true;
 
   if (left->ChangeKind == StateChange::Remove)
@@ -152,7 +152,7 @@ bool ChangeSet::ChangeComparer::operator()
 void ChangeSet::CompareLocations(const Location * origin,
 				 const Location * ancestor)
 {
-  CompareFiles(origin->Root(), ancestor->Root());
+  CompareFiles(origin->Root(), ancestor ? ancestor->Root() : NULL);
 }
 
 } // namespace Attic

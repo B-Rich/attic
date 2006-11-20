@@ -70,10 +70,14 @@ public:
     Special = 0xff
   };
 
+  typedef std::map<std::string, void *>  AttributesMap;
+  typedef std::pair<std::string, void *> AttributesPair;
+
 protected:
-  mutable flags_t	flags;
-  mutable md5sum_t	csum;
-  mutable ChildrenMap * Children; // This is dynamically generated on-demand
+  mutable flags_t	  flags;
+  mutable md5sum_t	  csum;
+  mutable ChildrenMap *	  Children; // This is dynamically generated on-demand
+  mutable AttributesMap * Attributes; // This is only created if necessary
 
 public:
   Location *  Repository;
@@ -120,6 +124,16 @@ public:
     SetFlags(FILEINFO_READCSUM);
   }
   md5sum_t CurrentChecksum() const;
+
+  void * GetAttribute(const std::string& name) const;
+  void SetAttribute(const std::string& name, void * data);
+
+  virtual void ClearAttribute(const std::string& name) {
+    Attributes->erase(name);
+  }
+  virtual void ClearAllAttributes(const std::string& name) {
+    Attributes->clear();
+  }
 
   virtual DateTime LastWriteTime() const = 0;
   virtual void SetLastWriteTime(const DateTime& when) = 0;

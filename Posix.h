@@ -84,13 +84,13 @@ class PosixVolumeBroker : public VolumeBroker
 		      const DateTime& LastWriteTime);
   void SetLinkTarget(const Path& path, const Path& dest);
 
-  void CreateFile(const PosixFileInfo& entry);
+  void CreateFile(PosixFileInfo& entry);
   void DeleteFile(const Path& path);
   void CopyFile(const PosixFileInfo& entry, const Path& dest);
   void UpdateFile(const PosixFileInfo& entry, const PosixFileInfo& dest);
   void MoveFile(const PosixFileInfo& entry, const Path& dest);
 
-  void CreateDirectory(const PosixFileInfo& entry);
+  //void CreateDirectory(const PosixFileInfo& entry);
   void DeleteDirectory(const Path& entry);
   void CopyDirectory(const PosixFileInfo& entry, const Path& dest);
   void MoveDirectory(const PosixFileInfo& entry, const Path& dest);
@@ -100,10 +100,15 @@ public:
 			     const Path& _VolumePath = "/")
     : VolumeBroker(_RootPath, _VolumePath) {}
     
+  virtual FileInfo * FindRoot() {
+    return CreateFileInfo("");
+  }
   virtual FileInfo * CreateFileInfo(const Path& path,
 				    FileInfo * parent = NULL) const {
     return new PosixFileInfo(path, parent, Repository);
   }
+
+  virtual unsigned long long Length(const Path& path) const;
 
   virtual bool Exists(const Path& path) const;
   virtual bool IsReadable(const Path& path) const;
@@ -118,8 +123,8 @@ public:
 
   virtual void ReadDirectory(FileInfo& entry) const;
   virtual void CreateDirectory(const Path& path);
-  virtual void Create(const FileInfo& entry);
-  virtual void Delete(const FileInfo& entry);
+  virtual void Create(FileInfo& entry);
+  virtual void Delete(FileInfo& entry);
   virtual void Copy(const FileInfo& entry, const Path& dest);
   virtual void Move(FileInfo& entry, const Path& dest);
 

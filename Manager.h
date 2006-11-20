@@ -19,6 +19,7 @@ public:
 
   void operator()() {
     assert(Pool);
+    Pool->Initialize();
     Pool->ComputeChanges();
     Pool->ApplyChanges(Log);
   }
@@ -47,11 +48,18 @@ public:
   }
 
   void operator()() {
+#ifndef SINGLE_THREADED
     for (std::deque<DataPool *>::iterator i = CurrentPools.begin();
 	 i != CurrentPools.end();
 	 i++)
       ActiveJobs.create_thread(RunPoolJob(*i, CurrentLog));
     ActiveJobs.join_all();
+#else
+    for (std::deque<DataPool *>::iterator i = CurrentPools.begin();
+	 i != CurrentPools.end();
+	 i++)
+      RunPoolJob(*i, CurrentLog)();
+#endif
   }
   void Synchronize() { (*this)(); }
 };

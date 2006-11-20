@@ -36,8 +36,13 @@ public:
       (*i)->Initialize();
   }
 
-  void RegisterAncestor(Location * ancestor) {
-    CommonAncestor = ancestor;
+  Location * AddLocation(Broker * broker) {
+    Locations.push_back(new Location(broker));
+    return Locations.back();
+  }
+  Location * SetAncestor(Broker * broker) {
+    CommonAncestor = AddLocation(broker);
+    return CommonAncestor;
   }
 
   void ComputeChanges();

@@ -31,7 +31,7 @@ public:
   mutable FileInfo * RootEntry;
 
   FileInfo * Root() const {
-    return NULL;
+    return SiteBroker->FindRoot();
   }
 
   typedef std::map<md5sum_t, FileInfoArray>  ChecksumMap;

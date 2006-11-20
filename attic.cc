@@ -1,5 +1,6 @@
 #include "Manager.h"
 #include "Posix.h"
+#include "FlatDB.h"
 
 #include <iostream>
 
@@ -18,8 +19,7 @@ int main(int argc, char *args[])
 
   for (int i = 1; i < argc; i++) {
     if (args[i][0] != '-') {
-      Broker * broker = new PosixVolumeBroker(Path::ExpandPath(args[i]));
-      pool->Locations.push_back(new Location(broker));
+      pool->AddLocation(new PosixVolumeBroker(Path::ExpandPath(args[i])));
       continue;
     }
 
@@ -28,15 +28,15 @@ int main(int argc, char *args[])
       optionTemplate.PreserveChanges = true;
       break;
 
-#if 0
     case '>': {
-      DatabaseBroker db(Path::ExpandPath(args[++i]));
-      std::cout << "Dumping state database '" << db.DatabasePath << "':"
+      Path path(Path::ExpandPath(args[++i]));
+      Location db(new FlatDatabaseBroker(path));
+      db.Initialize();
+      std::cout << "Dumping state database '" << path << "':"
 		<< std::endl;
-      db.Dump(std::cout, optionTemplate.VerboseLogging);
+      db.Root()->Dump(std::cout, optionTemplate.VerboseLogging);
       return 0;
     }
-#endif
 
     case 'D':
       DebugMode = true;
@@ -55,16 +55,12 @@ int main(int argc, char *args[])
       if (i + 1 < argc)
 	generations = Path::ExpandPath(args[++i]);
       break;
+#endif
 
     case 'd':
-      if (i + 1 < argc) {
-	DatabaseBroker * broker =
-	  new DatabaseBroker(Path::ExpandPath(args[++i]));
-	pool->RegisterAncestor(new Location(broker));
-	broker->Load();
-      }
+      if (i + 1 < argc)
+	pool->SetAncestor(new FlatDatabaseBroker(Path::ExpandPath(args[++i])));
       break;
-#endif
 
     case 'n':
       pool->LoggingOnly = true;
@@ -145,10 +141,12 @@ Update the database to reflect foo's recent changes:\n\
 
   for (std::vector<Location *>::iterator i = pool->Locations.begin();
        i != pool->Locations.end();
-       i++)
+       i++) {
     (*i)->CopyOptions(optionTemplate);
-  
-  pool->Locations.front()->PreserveChanges = true;
+    if (*i != pool->CommonAncestor &&
+	*i != pool->Locations.back())
+      (*i)->PreserveChanges = true;
+  }
 
   atticManager.Synchronize();
 

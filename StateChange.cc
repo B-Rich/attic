@@ -17,7 +17,7 @@ void StateChange::Report(MessageLog& log) const
   case Update:
     prefix = "M ";
     break;
-  case UpdateProps:
+  case UpdateAttrs:
     prefix = "p ";
     break;
   default:
@@ -37,7 +37,7 @@ void StateChange::DebugPrint(MessageLog& log) const
   case Add:	    label = "Add "; break;
   case Remove:	    label = "Remove "; break;
   case Update:	    label = "Update "; break;
-  case UpdateProps: label = "UpdateProps "; break;
+  case UpdateAttrs: label = "UpdateAttrs "; break;
   default:          assert(0); break;
   }
 

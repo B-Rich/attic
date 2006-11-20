@@ -6,10 +6,10 @@ attic_SOURCES = \
 	FileInfo.cc Path.cc DateTime.cc Regex.cc \
 	ChangeSet.cc StateChange.cc \
 	DataPool.cc Location.cc \
-	Broker.cc Posix.cc
+	Posix.cc FlatDB.cc
 
 if DEBUG
-attic_CXXFLAGS += -DDEBUG_LEVEL=4
+attic_CXXFLAGS += -DDEBUG_LEVEL=4 -DSINGLE_THREADED
 endif
 attic_LDFLAGS = -static	# for the sake of command-line speed
 

@@ -10,7 +10,9 @@
 
 
 @interface MainWindowController : NSWindowController {
-
+  IBOutlet NSTextView * debugView;
 }
+
+- (IBAction)Synchronize:(id)sender;
 
 @end

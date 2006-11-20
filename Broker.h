@@ -13,12 +13,17 @@ class Broker
 public:
   Location * Repository;
 
-  virtual void Initialize(Location * _Repository) {
-    Repository = _Repository;
+  virtual ~Broker() {}
 
+  virtual void SetRepository(Location * _Repository) {
+    Repository = _Repository;
   }
+
+  virtual FileInfo * FindRoot() = 0;
   virtual FileInfo * CreateFileInfo(const Path& path,
 				    FileInfo * parent = NULL) const = 0;
+
+  virtual unsigned long long Length(const Path& path) const = 0;
 
   virtual bool Exists(const Path& path) const = 0;
   virtual bool IsReadable(const Path& path) const = 0;
@@ -33,8 +38,8 @@ public:
 
   virtual void ReadDirectory(FileInfo& entry) const = 0;
   virtual void CreateDirectory(const Path& path) = 0;
-  virtual void Create(const FileInfo& entry) = 0;
-  virtual void Delete(const FileInfo& entry) = 0;
+  virtual void Create(FileInfo& entry) = 0;
+  virtual void Delete(FileInfo& entry) = 0;
   virtual void Copy(const FileInfo& entry, const Path& dest) = 0;
   virtual void Move(FileInfo& entry, const Path& dest) = 0;
 
@@ -46,27 +51,7 @@ public:
   virtual std::string Moniker(const FileInfo& entry) const = 0;
 };
 
-class DatabaseBroker : public Broker
-{
-  FileInfo *  Root;
-
-public:
-  Path        DatabasePath;
-  std::string Username;
-  std::string Password;
-  bool        Dirty;
-
-  DatabaseBroker(const Path& _DatabasePath)
-    : DatabasePath(_DatabasePath), Dirty(false) {}
-  virtual ~DatabaseBroker();
-
-  virtual void Sync();
-
-  void Load();
-  void Save();
-
-  void Dump(std::ostream& out, bool verbose);
-};
+class DatabaseBroker : public Broker {};
 
 class Archive;
 class VolumeBroker : public Broker
@@ -101,6 +86,7 @@ public:
   }
 };
 
+#if 0
 class Socket;
 class RemoteBroker : public VolumeBroker
 {
@@ -114,6 +100,7 @@ public:
 private:
   Socket *     Connection;
 };
+#endif
 
 } // namespace Attic
 

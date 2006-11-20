@@ -126,6 +126,8 @@ void Location::CopyOptions(const Location& optionTemplate)
 
 void Location::Initialize()
 {
+  SiteBroker->SetRepository(this);
+
   // RCS SCCS CVS  CVS.adm  RCSLOG  cvslog.*  tags  TAGS  .make.state
   // .nse_depinfo  *~ #* .#* ,* _$* *$ *.old *.bak *.BAK *.orig *.rej
   // .del-* *.a *.olb *.o *.obj *.so *.exe *.Z *.elc *.ln core .svn/
@@ -265,7 +267,7 @@ void Location::ApplyChange(MessageLog * log, const StateChange& change,
     label = "P ";
     break;
 
-  case StateChange::UpdateProps:
+  case StateChange::UpdateAttrs:
     change.Item->CopyAttributes(targetInfo->Pathname);
     label = "p ";
     break;
@@ -333,7 +335,7 @@ void StateMap::ApplyChange(const StateChange& change)
       change.Item->CopyDetails(*entry, true);
     break;
 
-  case StateChange::UpdateProps:
+  case StateChange::UpdateAttrs:
     entry = Root->FindMember(change.Item->FullName);
     if (entry)
       change.Item->CopyAttributes(*entry, true);

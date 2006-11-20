@@ -3,8 +3,10 @@
         {CLASS = AtticApplication; LANGUAGE = ObjC; SUPERCLASS = NSApplication; }, 
         {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
         {
+            ACTIONS = {Synchronize = id; }; 
             CLASS = MainWindowController; 
             LANGUAGE = ObjC; 
+            OUTLETS = {debugView = NSTextView; }; 
             SUPERCLASS = NSWindowController; 
         }
     ); 

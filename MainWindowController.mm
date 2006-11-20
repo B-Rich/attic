@@ -7,8 +7,16 @@
 //
 
 #import "MainWindowController.h"
-
+#import "TextViewStream.h"
+#import "Invoke.h"
 
 @implementation MainWindowController
+
+- (IBAction)Synchronize:(id)sender
+{
+	TextViewStream viewStream(debugView);
+	Attic::MessageLog log(viewStream);
+	InvokeSychronization(log);
+}
 
 @end
