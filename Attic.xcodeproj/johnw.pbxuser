@@ -9,8 +9,7 @@
 		);
 		breakpoints = (
 			331DD6D00B116EC300B40561 /* DataPool.cc:83 */,
-			331DD7580B11761400B40561 /* TextViewStream.mm:25 */,
-			331DD75A0B11761600B40561 /* TextViewStream.mm:37 */,
+			331DD7870B117B2200B40561 /* main.m:14 */,
 		);
 		breakpointsGroup = 33E3FB1F0B113F19000BC905 /* XCBreakpointsBucket */;
 		codeSenseManager = 33E3FA620B113885000BC905 /* Code sense */;
@@ -286,6 +285,25 @@
 			331DD7800B11799000B40561 /* PBXTextBookmark */ = 331DD7800B11799000B40561 /* PBXTextBookmark */;
 			331DD7810B11799000B40561 /* PBXTextBookmark */ = 331DD7810B11799000B40561 /* PBXTextBookmark */;
 			331DD7820B11799000B40561 /* PBXTextBookmark */ = 331DD7820B11799000B40561 /* PBXTextBookmark */;
+			331DD7890B117B2700B40561 /* PBXTextBookmark */ = 331DD7890B117B2700B40561 /* PBXTextBookmark */;
+			331DD78C0B117B2700B40561 /* PBXTextBookmark */ = 331DD78C0B117B2700B40561 /* PBXTextBookmark */;
+			331DD78D0B117B2700B40561 /* PBXTextBookmark */ = 331DD78D0B117B2700B40561 /* PBXTextBookmark */;
+			331DD78E0B117B2D00B40561 /* PBXTextBookmark */ = 331DD78E0B117B2D00B40561 /* PBXTextBookmark */;
+			331DD78F0B117B2D00B40561 /* PBXTextBookmark */ = 331DD78F0B117B2D00B40561 /* PBXTextBookmark */;
+			331DD7900B117B2D00B40561 /* PBXTextBookmark */ = 331DD7900B117B2D00B40561 /* PBXTextBookmark */;
+			331DD7910B117B2D00B40561 /* PBXTextBookmark */ = 331DD7910B117B2D00B40561 /* PBXTextBookmark */;
+			331DD7920B117B2D00B40561 /* PBXTextBookmark */ = 331DD7920B117B2D00B40561 /* PBXTextBookmark */;
+			331DD7940B117B4200B40561 /* PBXTextBookmark */ = 331DD7940B117B4200B40561 /* PBXTextBookmark */;
+			331DD7970B117B4B00B40561 /* PBXTextBookmark */ = 331DD7970B117B4B00B40561 /* PBXTextBookmark */;
+			331DD7980B117B4B00B40561 /* PBXTextBookmark */ = 331DD7980B117B4B00B40561 /* PBXTextBookmark */;
+			331DD7990B117B4B00B40561 /* PBXTextBookmark */ = 331DD7990B117B4B00B40561 /* PBXTextBookmark */;
+			331DD79A0B117B4F00B40561 /* PBXTextBookmark */ = 331DD79A0B117B4F00B40561 /* PBXTextBookmark */;
+			331DD79B0B117B4F00B40561 /* PBXTextBookmark */ = 331DD79B0B117B4F00B40561 /* PBXTextBookmark */;
+			331DD79C0B117B4F00B40561 /* PBXTextBookmark */ = 331DD79C0B117B4F00B40561 /* PBXTextBookmark */;
+			331DD79D0B117B4F00B40561 /* PBXTextBookmark */ = 331DD79D0B117B4F00B40561 /* PBXTextBookmark */;
+			331DD79E0B117B4F00B40561 /* PBXTextBookmark */ = 331DD79E0B117B4F00B40561 /* PBXTextBookmark */;
+			331DD79F0B117B4F00B40561 /* PBXTextBookmark */ = 331DD79F0B117B4F00B40561 /* PBXTextBookmark */;
+			331DD7A00B117B4F00B40561 /* PBXTextBookmark */ = 331DD7A00B117B4F00B40561 /* PBXTextBookmark */;
 			3391F3C50B1166A90094EDFC = 3391F3C50B1166A90094EDFC /* PBXTextBookmark */;
 			3391F41A0B11688B0094EDFC = 3391F41A0B11688B0094EDFC /* PBXTextBookmark */;
 			3391F41C0B11688B0094EDFC = 3391F41C0B11688B0094EDFC /* PBXTextBookmark */;
@@ -398,8 +416,8 @@
 	331DD6760B116BD000B40561 /* TextViewStream.mm */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {545, 896}}";
-			sepNavSelRange = "{1309, 0}";
-			sepNavVisRect = "{{0, 0}, {545, 623}}";
+			sepNavSelRange = "{406, 69}";
+			sepNavVisRect = "{{0, 273}, {545, 623}}";
 		};
 	};
 	331DD6910B116D2400B40561 /* PBXTextBookmark */ = {
@@ -842,7 +860,7 @@
 		hitCount = 1;
 		lineNumber = 83;
 		location = DataPool.ob;
-		modificationTime = 185693739.270748;
+		modificationTime = 185695054.72778;
 		state = 1;
 	};
 	331DD6D10B116ED900B40561 /* PBXTextBookmark */ = {
@@ -1791,36 +1809,6 @@
 		vrLen = 298;
 		vrLoc = 0;
 	};
-	331DD7580B11761400B40561 /* TextViewStream.mm:25 */ = {
-		isa = PBXFileBreakpoint;
-		actions = (
-		);
-		breakpointStyle = 0;
-		continueAfterActions = 0;
-		delayBeforeContinue = 0;
-		fileReference = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
-		functionName = "TextViewBuffer::overflow()";
-		hitCount = 1;
-		lineNumber = 25;
-		location = TextViewStream.ob;
-		modificationTime = 185693733.692931;
-		state = 1;
-	};
-	331DD75A0B11761600B40561 /* TextViewStream.mm:37 */ = {
-		isa = PBXFileBreakpoint;
-		actions = (
-		);
-		breakpointStyle = 0;
-		continueAfterActions = 0;
-		delayBeforeContinue = 0;
-		fileReference = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
-		functionName = "TextViewBuffer::xsputn()";
-		hitCount = 1;
-		lineNumber = 37;
-		location = TextViewStream.ob;
-		modificationTime = 185693741.639502;
-		state = 1;
-	};
 	331DD75C0B11761800B40561 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
@@ -2105,6 +2093,211 @@
 		rLoc = 1309;
 		rType = 0;
 		vrLen = 996;
+		vrLoc = 0;
+	};
+	331DD7870B117B2200B40561 /* main.m:14 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		delayBeforeContinue = 0;
+		fileReference = 29B97316FDCFA39411CA2CEA /* main.m */;
+		functionName = "main()";
+		hitCount = 1;
+		lineNumber = 14;
+		location = main.ob;
+		modificationTime = 185695054.820453;
+		state = 1;
+	};
+	331DD7890B117B2700B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 436;
+		vrLoc = 475;
+	};
+	331DD78C0B117B2700B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 436;
+		vrLoc = 475;
+	};
+	331DD78D0B117B2700B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 436;
+		vrLoc = 475;
+	};
+	331DD78E0B117B2D00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 996;
+		vrLoc = 0;
+	};
+	331DD78F0B117B2D00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 33E3FB460B1144EF000BC905 /* Application.h */;
+		name = "Application.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 249;
+		vrLoc = 0;
+	};
+	331DD7900B117B2D00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 996;
+		vrLoc = 0;
+	};
+	331DD7910B117B2D00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 33E3FB460B1144EF000BC905 /* Application.h */;
+		name = "Application.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 249;
+		vrLoc = 0;
+	};
+	331DD7920B117B2D00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 249;
+		vrLoc = 0;
+	};
+	331DD7940B117B4200B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 436;
+		vrLoc = 475;
+	};
+	331DD7970B117B4B00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 436;
+		vrLoc = 475;
+	};
+	331DD7980B117B4B00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 436;
+		vrLoc = 475;
+	};
+	331DD7990B117B4B00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "TextViewStream.mm: 64";
+		rLen = 0;
+		rLoc = 1309;
+		rType = 0;
+		vrLen = 436;
+		vrLoc = 475;
+	};
+	331DD79A0B117B4F00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "void TextViewBuffer::InsertText(const char * text, unsigned int len)";
+		rLen = 69;
+		rLoc = 406;
+		rType = 0;
+		vrLen = 964;
+		vrLoc = 345;
+	};
+	331DD79B0B117B4F00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 33E3FB460B1144EF000BC905 /* Application.h */;
+		name = "Application.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 249;
+		vrLoc = 0;
+	};
+	331DD79C0B117B4F00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 249;
+		vrLoc = 0;
+	};
+	331DD79D0B117B4F00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 249;
+		vrLoc = 0;
+	};
+	331DD79E0B117B4F00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 331DD6760B116BD000B40561 /* TextViewStream.mm */;
+		name = "void TextViewBuffer::InsertText(const char * text, unsigned int len)";
+		rLen = 69;
+		rLoc = 406;
+		rType = 0;
+		vrLen = 964;
+		vrLoc = 345;
+	};
+	331DD79F0B117B4F00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 33E3FB460B1144EF000BC905 /* Application.h */;
+		name = "Application.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 249;
+		vrLoc = 0;
+	};
+	331DD7A00B117B4F00B40561 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 249;
 		vrLoc = 0;
 	};
 	3391F37E0B1164900094EDFC /* FlatDB.h */ = {
@@ -2502,8 +2695,7 @@
 		name = "Project Breakpoints";
 		objects = (
 			331DD6D00B116EC300B40561 /* DataPool.cc:83 */,
-			331DD7580B11761400B40561 /* TextViewStream.mm:25 */,
-			331DD75A0B11761600B40561 /* TextViewStream.mm:37 */,
+			331DD7870B117B2200B40561 /* main.m:14 */,
 		);
 	};
 	33E3FB230B113F75000BC905 /* PBXTextBookmark */ = {

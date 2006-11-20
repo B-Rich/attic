@@ -104,8 +104,6 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				33E3FB460B1144EF000BC905 /* Application.h */,
-				33E3FB470B1144F0000BC905 /* Application.mm */,
 				33E3FB310B11443F000BC905 /* MainWindowController.h */,
 				33E3FB320B11443F000BC905 /* MainWindowController.mm */,
 				33E3FB0B0B113EA9000BC905 /* Manager.h */,
@@ -192,6 +190,9 @@
 		33E3FB1E0B113F11000BC905 /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
+				29B97316FDCFA39411CA2CEA /* main.m */,
+				33E3FB460B1144EF000BC905 /* Application.h */,
+				33E3FB470B1144F0000BC905 /* Application.mm */,
 				33E3FB010B113EA9000BC905 /* acconf.h */,
 				33E3FB030B113EA9000BC905 /* binary.h */,
 				33E3FB080B113EA9000BC905 /* error.h */,
@@ -204,7 +205,6 @@
 				33E3FA6A0B1138D6000BC905 /* DateTime.cc */,
 				33E3FB0D0B113EA9000BC905 /* MessageLog.h */,
 				32CA4F630368D1EE00C91783 /* Attic_Prefix.pch */,
-				29B97316FDCFA39411CA2CEA /* main.m */,
 				33E3FA660B1138D6000BC905 /* binary.cc */,
 				33E3FA6D0B1138D6000BC905 /* md5.c */,
 				33E3FA6E0B1138D6000BC905 /* md5main.c */,
