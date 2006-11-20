@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		33E3FA730B1138D6000BC905 /* attic.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA650B1138D6000BC905 /* attic.cc */; };
 		33E3FA740B1138D6000BC905 /* binary.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA660B1138D6000BC905 /* binary.cc */; };
 		33E3FA750B1138D6000BC905 /* Broker.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA670B1138D6000BC905 /* Broker.cc */; };
 		33E3FA760B1138D6000BC905 /* ChangeSet.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA680B1138D6000BC905 /* ChangeSet.cc */; };
@@ -21,6 +20,8 @@
 		33E3FA7E0B1138D6000BC905 /* Posix.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA700B1138D6000BC905 /* Posix.cc */; };
 		33E3FA7F0B1138D6000BC905 /* Regex.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA710B1138D6000BC905 /* Regex.cc */; };
 		33E3FA800B1138D6000BC905 /* StateChange.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA720B1138D6000BC905 /* StateChange.cc */; };
+		33E3FB330B11443F000BC905 /* WindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FB320B11443F000BC905 /* WindowController.mm */; };
+		33E3FB480B1144F0000BC905 /* Application.mm in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FB470B1144F0000BC905 /* Application.mm */; };
 		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
@@ -36,7 +37,6 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* Attic_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attic_Prefix.pch; sourceTree = "<group>"; };
-		33E3FA650B1138D6000BC905 /* attic.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = attic.cc; path = ../attic/attic.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA660B1138D6000BC905 /* binary.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = binary.cc; path = ../attic/binary.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA670B1138D6000BC905 /* Broker.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Broker.cc; path = ../attic/Broker.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA680B1138D6000BC905 /* ChangeSet.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ChangeSet.cc; path = ../attic/ChangeSet.cc; sourceTree = SOURCE_ROOT; };
@@ -67,6 +67,12 @@
 		33E3FB0F0B113EA9000BC905 /* Posix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Posix.h; path = ../attic/Posix.h; sourceTree = SOURCE_ROOT; };
 		33E3FB100B113EA9000BC905 /* Regex.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Regex.h; path = ../attic/Regex.h; sourceTree = SOURCE_ROOT; };
 		33E3FB110B113EA9000BC905 /* StateChange.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = StateChange.h; path = ../attic/StateChange.h; sourceTree = SOURCE_ROOT; };
+		33E3FB310B11443F000BC905 /* WindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowController.h; sourceTree = "<group>"; };
+		33E3FB320B11443F000BC905 /* WindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WindowController.mm; sourceTree = "<group>"; };
+		33E3FB460B1144EF000BC905 /* Application.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Application.h; sourceTree = "<group>"; };
+		33E3FB470B1144F0000BC905 /* Application.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Application.mm; sourceTree = "<group>"; };
+		33E3FB5A0B114655000BC905 /* AtticWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AtticWindowController.mm; sourceTree = "<group>"; };
+		33E3FB5B0B114660000BC905 /* AtticWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AtticWindowController.h; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Attic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Attic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -86,6 +92,35 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				33E3FB5B0B114660000BC905 /* AtticWindowController.h */,
+				33E3FB310B11443F000BC905 /* WindowController.h */,
+				33E3FB5A0B114655000BC905 /* AtticWindowController.mm */,
+				33E3FB320B11443F000BC905 /* WindowController.mm */,
+				33E3FB460B1144EF000BC905 /* Application.h */,
+				33E3FB470B1144F0000BC905 /* Application.mm */,
+				33E3FB040B113EA9000BC905 /* Broker.h */,
+				33E3FB050B113EA9000BC905 /* ChangeSet.h */,
+				33E3FB060B113EA9000BC905 /* DataPool.h */,
+				33E3FA670B1138D6000BC905 /* Broker.cc */,
+				33E3FA680B1138D6000BC905 /* ChangeSet.cc */,
+				33E3FA690B1138D6000BC905 /* DataPool.cc */,
+				33E3FB090B113EA9000BC905 /* FileInfo.h */,
+				33E3FB0A0B113EA9000BC905 /* Location.h */,
+				33E3FB0B0B113EA9000BC905 /* Manager.h */,
+				33E3FB0D0B113EA9000BC905 /* MessageLog.h */,
+				33E3FB0E0B113EA9000BC905 /* Path.h */,
+				33E3FB0F0B113EA9000BC905 /* Posix.h */,
+				33E3FB100B113EA9000BC905 /* Regex.h */,
+				33E3FB110B113EA9000BC905 /* StateChange.h */,
+				33E3FA6B0B1138D6000BC905 /* FileInfo.cc */,
+				33E3FA6C0B1138D6000BC905 /* Location.cc */,
+				33E3FA6F0B1138D6000BC905 /* Path.cc */,
+				33E3FA700B1138D6000BC905 /* Posix.cc */,
+				33E3FA710B1138D6000BC905 /* Regex.cc */,
+				33E3FA720B1138D6000BC905 /* StateChange.cc */,
+				33E3FB020B113EA9000BC905 /* Archive.h */,
+				33E3FB070B113EA9000BC905 /* DateTime.h */,
+				33E3FA6A0B1138D6000BC905 /* DateTime.cc */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -151,38 +186,14 @@
 			isa = PBXGroup;
 			children = (
 				33E3FB010B113EA9000BC905 /* acconf.h */,
-				33E3FB020B113EA9000BC905 /* Archive.h */,
 				33E3FB030B113EA9000BC905 /* binary.h */,
-				33E3FB040B113EA9000BC905 /* Broker.h */,
-				33E3FB050B113EA9000BC905 /* ChangeSet.h */,
-				33E3FB060B113EA9000BC905 /* DataPool.h */,
-				33E3FB070B113EA9000BC905 /* DateTime.h */,
 				33E3FB080B113EA9000BC905 /* error.h */,
-				33E3FB090B113EA9000BC905 /* FileInfo.h */,
-				33E3FB0A0B113EA9000BC905 /* Location.h */,
-				33E3FB0B0B113EA9000BC905 /* Manager.h */,
 				33E3FB0C0B113EA9000BC905 /* md5.h */,
-				33E3FB0D0B113EA9000BC905 /* MessageLog.h */,
-				33E3FB0E0B113EA9000BC905 /* Path.h */,
-				33E3FB0F0B113EA9000BC905 /* Posix.h */,
-				33E3FB100B113EA9000BC905 /* Regex.h */,
-				33E3FB110B113EA9000BC905 /* StateChange.h */,
 				32CA4F630368D1EE00C91783 /* Attic_Prefix.pch */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
-				33E3FA650B1138D6000BC905 /* attic.cc */,
 				33E3FA660B1138D6000BC905 /* binary.cc */,
-				33E3FA670B1138D6000BC905 /* Broker.cc */,
-				33E3FA680B1138D6000BC905 /* ChangeSet.cc */,
-				33E3FA690B1138D6000BC905 /* DataPool.cc */,
-				33E3FA6A0B1138D6000BC905 /* DateTime.cc */,
-				33E3FA6B0B1138D6000BC905 /* FileInfo.cc */,
-				33E3FA6C0B1138D6000BC905 /* Location.cc */,
 				33E3FA6D0B1138D6000BC905 /* md5.c */,
 				33E3FA6E0B1138D6000BC905 /* md5main.c */,
-				33E3FA6F0B1138D6000BC905 /* Path.cc */,
-				33E3FA700B1138D6000BC905 /* Posix.cc */,
-				33E3FA710B1138D6000BC905 /* Regex.cc */,
-				33E3FA720B1138D6000BC905 /* StateChange.cc */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -241,7 +252,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D11072D0486CEB800E47090 /* main.m in Sources */,
-				33E3FA730B1138D6000BC905 /* attic.cc in Sources */,
 				33E3FA740B1138D6000BC905 /* binary.cc in Sources */,
 				33E3FA750B1138D6000BC905 /* Broker.cc in Sources */,
 				33E3FA760B1138D6000BC905 /* ChangeSet.cc in Sources */,
@@ -255,6 +265,8 @@
 				33E3FA7E0B1138D6000BC905 /* Posix.cc in Sources */,
 				33E3FA7F0B1138D6000BC905 /* Regex.cc in Sources */,
 				33E3FA800B1138D6000BC905 /* StateChange.cc in Sources */,
+				33E3FB330B11443F000BC905 /* WindowController.mm in Sources */,
+				33E3FB480B1144F0000BC905 /* Application.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

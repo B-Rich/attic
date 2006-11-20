@@ -306,20 +306,23 @@
 							<array>
 								<string>29B97314FDCFA39411CA2CEA</string>
 								<string>080E96DDFE201D6D7F000001</string>
-								<string>33E3FB1E0B113F11000BC905</string>
 								<string>E2644B35053B69B200211256</string>
 								<string>1CC0EA4004350EF90041110B</string>
+								<string>29B97318FDCFA39411CA2CEA</string>
+								<string>29B97319FDCFA39411CA2CEA</string>
 								<string>1C77FABC04509CD000000102</string>
 								<string>1C3E0DCA080725EA00A55177</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>44</integer>
+									<integer>2</integer>
+									<integer>1</integer>
+									<integer>0</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 230}, {186, 642}}</string>
+							<string>{{0, 0}, {186, 642}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -338,7 +341,7 @@
 							<real>186</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>100 150 800 701 0 0 1440 878 </string>
+						<string>99 153 800 701 0 0 1440 878 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -366,7 +369,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>33E3FB2C0B113F75000BC905</string>
+										<string>33E3FB590B1145FD000BC905</string>
 										<key>history</key>
 										<array>
 											<string>33E3FB230B113F75000BC905</string>
@@ -394,7 +397,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {592, 0}}</string>
 								<key>RubberWindowFrame</key>
-								<string>100 150 800 701 0 0 1440 878 </string>
+								<string>99 153 800 701 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -414,7 +417,7 @@
 								<key>Frame</key>
 								<string>{{0, 5}, {592, 655}}</string>
 								<key>RubberWindowFrame</key>
-								<string>100 150 800 701 0 0 1440 878 </string>
+								<string>99 153 800 701 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -559,7 +562,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>185679733.94887701</real>
+	<real>185681405.213503</real>
 	<key>ToolbarDisplayMode</key>
 	<integer>1</integer>
 	<key>ToolbarIsVisible</key>
@@ -580,7 +583,7 @@
 		<string>/Volumes/Users/johnw/src/Attic/Attic.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>100 150 800 701 0 0 1440 878 </string>
+	<string>99 153 800 701 0 0 1440 878 </string>
 	<key>WindowTools</key>
 	<array>
 		<dict>
