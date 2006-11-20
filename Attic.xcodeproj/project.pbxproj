@@ -1,0 +1,341 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		33E3FA730B1138D6000BC905 /* attic.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA650B1138D6000BC905 /* attic.cc */; };
+		33E3FA740B1138D6000BC905 /* binary.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA660B1138D6000BC905 /* binary.cc */; };
+		33E3FA750B1138D6000BC905 /* Broker.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA670B1138D6000BC905 /* Broker.cc */; };
+		33E3FA760B1138D6000BC905 /* ChangeSet.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA680B1138D6000BC905 /* ChangeSet.cc */; };
+		33E3FA770B1138D6000BC905 /* DataPool.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA690B1138D6000BC905 /* DataPool.cc */; };
+		33E3FA780B1138D6000BC905 /* DateTime.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA6A0B1138D6000BC905 /* DateTime.cc */; };
+		33E3FA790B1138D6000BC905 /* FileInfo.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA6B0B1138D6000BC905 /* FileInfo.cc */; };
+		33E3FA7A0B1138D6000BC905 /* Location.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA6C0B1138D6000BC905 /* Location.cc */; };
+		33E3FA7B0B1138D6000BC905 /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA6D0B1138D6000BC905 /* md5.c */; };
+		33E3FA7C0B1138D6000BC905 /* md5main.c in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA6E0B1138D6000BC905 /* md5main.c */; };
+		33E3FA7D0B1138D6000BC905 /* Path.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA6F0B1138D6000BC905 /* Path.cc */; };
+		33E3FA7E0B1138D6000BC905 /* Posix.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA700B1138D6000BC905 /* Posix.cc */; };
+		33E3FA7F0B1138D6000BC905 /* Regex.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA710B1138D6000BC905 /* Regex.cc */; };
+		33E3FA800B1138D6000BC905 /* StateChange.cc in Sources */ = {isa = PBXBuildFile; fileRef = 33E3FA720B1138D6000BC905 /* StateChange.cc */; };
+		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
+		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
+		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
+		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
+		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		29B97319FDCFA39411CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
+		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		32CA4F630368D1EE00C91783 /* Attic_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attic_Prefix.pch; sourceTree = "<group>"; };
+		33E3FA650B1138D6000BC905 /* attic.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = attic.cc; path = ../attic/attic.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA660B1138D6000BC905 /* binary.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = binary.cc; path = ../attic/binary.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA670B1138D6000BC905 /* Broker.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Broker.cc; path = ../attic/Broker.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA680B1138D6000BC905 /* ChangeSet.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ChangeSet.cc; path = ../attic/ChangeSet.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA690B1138D6000BC905 /* DataPool.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DataPool.cc; path = ../attic/DataPool.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA6A0B1138D6000BC905 /* DateTime.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DateTime.cc; path = ../attic/DateTime.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA6B0B1138D6000BC905 /* FileInfo.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = FileInfo.cc; path = ../attic/FileInfo.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA6C0B1138D6000BC905 /* Location.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Location.cc; path = ../attic/Location.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA6D0B1138D6000BC905 /* md5.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = md5.c; path = ../attic/md5.c; sourceTree = SOURCE_ROOT; };
+		33E3FA6E0B1138D6000BC905 /* md5main.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = md5main.c; path = ../attic/md5main.c; sourceTree = SOURCE_ROOT; };
+		33E3FA6F0B1138D6000BC905 /* Path.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Path.cc; path = ../attic/Path.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA700B1138D6000BC905 /* Posix.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Posix.cc; path = ../attic/Posix.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA710B1138D6000BC905 /* Regex.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Regex.cc; path = ../attic/Regex.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA720B1138D6000BC905 /* StateChange.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StateChange.cc; path = ../attic/StateChange.cc; sourceTree = SOURCE_ROOT; };
+		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D1107320486CEB800E47090 /* Attic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Attic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D11072E0486CEB800E47090 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		080E96DDFE201D6D7F000001 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
+			);
+			name = "Linked Frameworks";
+			sourceTree = "<group>";
+		};
+		1058C7A2FEA54F0111CA2CBB /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
+				13E42FB307B3F0F600E4EEF1 /* CoreData.framework */,
+				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		19C28FACFE9D520D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D1107320486CEB800E47090 /* Attic.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		29B97314FDCFA39411CA2CEA /* Attic */ = {
+			isa = PBXGroup;
+			children = (
+				080E96DDFE201D6D7F000001 /* Classes */,
+				29B97315FDCFA39411CA2CEA /* Other Sources */,
+				29B97317FDCFA39411CA2CEA /* Resources */,
+				29B97323FDCFA39411CA2CEA /* Frameworks */,
+				19C28FACFE9D520D11CA2CBB /* Products */,
+			);
+			name = Attic;
+			sourceTree = "<group>";
+		};
+		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				32CA4F630368D1EE00C91783 /* Attic_Prefix.pch */,
+				29B97316FDCFA39411CA2CEA /* main.m */,
+				33E3FA650B1138D6000BC905 /* attic.cc */,
+				33E3FA660B1138D6000BC905 /* binary.cc */,
+				33E3FA670B1138D6000BC905 /* Broker.cc */,
+				33E3FA680B1138D6000BC905 /* ChangeSet.cc */,
+				33E3FA690B1138D6000BC905 /* DataPool.cc */,
+				33E3FA6A0B1138D6000BC905 /* DateTime.cc */,
+				33E3FA6B0B1138D6000BC905 /* FileInfo.cc */,
+				33E3FA6C0B1138D6000BC905 /* Location.cc */,
+				33E3FA6D0B1138D6000BC905 /* md5.c */,
+				33E3FA6E0B1138D6000BC905 /* md5main.c */,
+				33E3FA6F0B1138D6000BC905 /* Path.cc */,
+				33E3FA700B1138D6000BC905 /* Posix.cc */,
+				33E3FA710B1138D6000BC905 /* Regex.cc */,
+				33E3FA720B1138D6000BC905 /* StateChange.cc */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		29B97317FDCFA39411CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8D1107310486CEB800E47090 /* Info.plist */,
+				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
+				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
+				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D1107260486CEB800E47090 /* Attic */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "Attic" */;
+			buildPhases = (
+				8D1107290486CEB800E47090 /* Resources */,
+				8D11072C0486CEB800E47090 /* Sources */,
+				8D11072E0486CEB800E47090 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Attic;
+			productInstallPath = "$(HOME)/Applications";
+			productName = Attic;
+			productReference = 8D1107320486CEB800E47090 /* Attic.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		29B97313FDCFA39411CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Attic" */;
+			hasScannedForEncodings = 1;
+			mainGroup = 29B97314FDCFA39411CA2CEA /* Attic */;
+			projectDirPath = "";
+			targets = (
+				8D1107260486CEB800E47090 /* Attic */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D1107290486CEB800E47090 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */,
+				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D11072C0486CEB800E47090 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072D0486CEB800E47090 /* main.m in Sources */,
+				33E3FA730B1138D6000BC905 /* attic.cc in Sources */,
+				33E3FA740B1138D6000BC905 /* binary.cc in Sources */,
+				33E3FA750B1138D6000BC905 /* Broker.cc in Sources */,
+				33E3FA760B1138D6000BC905 /* ChangeSet.cc in Sources */,
+				33E3FA770B1138D6000BC905 /* DataPool.cc in Sources */,
+				33E3FA780B1138D6000BC905 /* DateTime.cc in Sources */,
+				33E3FA790B1138D6000BC905 /* FileInfo.cc in Sources */,
+				33E3FA7A0B1138D6000BC905 /* Location.cc in Sources */,
+				33E3FA7B0B1138D6000BC905 /* md5.c in Sources */,
+				33E3FA7C0B1138D6000BC905 /* md5main.c in Sources */,
+				33E3FA7D0B1138D6000BC905 /* Path.cc in Sources */,
+				33E3FA7E0B1138D6000BC905 /* Posix.cc in Sources */,
+				33E3FA7F0B1138D6000BC905 /* Regex.cc in Sources */,
+				33E3FA800B1138D6000BC905 /* StateChange.cc in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		089C165CFE840E0CC02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C165DFE840E0CC02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		29B97318FDCFA39411CA2CEA /* MainMenu.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				29B97319FDCFA39411CA2CEA /* English */,
+			);
+			name = MainMenu.nib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		C01FCF4B08A954540054247B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				PRODUCT_NAME = Attic;
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		C01FCF4C08A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				PRODUCT_NAME = Attic;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		C01FCF4F08A954540054247B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					/sw/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib,
+					/sw/lib,
+				);
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+			};
+			name = Debug;
+		};
+		C01FCF5008A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					/sw/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib,
+					/sw/lib,
+				);
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "Attic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4B08A954540054247B /* Debug */,
+				C01FCF4C08A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Attic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4F08A954540054247B /* Debug */,
+				C01FCF5008A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+}

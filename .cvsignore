@@ -4,6 +4,7 @@
 .deps
 .gdb_history
 .libs
+Attic_Prefix.pch
 Makefile
 Makefile.in
 acconf.h
