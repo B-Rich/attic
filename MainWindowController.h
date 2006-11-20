@@ -11,6 +11,7 @@
 
 @interface MainWindowController : NSWindowController {
   IBOutlet NSTextView * debugView;
+  IBOutlet NSTabView *  tabView;
 }
 
 - (IBAction)Synchronize:(id)sender;

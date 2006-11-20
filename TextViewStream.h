@@ -6,18 +6,35 @@
 //  Copyright 2006 __MyCompanyName__. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-
 #include <ostream>
+#include <streambuf>
+
+class NSTextView;
+class TextViewBuffer : public std::streambuf
+{
+protected:
+	NSTextView * textView;
+public:
+	// constructor
+	TextViewBuffer (NSTextView * _textView);
+	virtual ~TextViewBuffer();
+
+protected:
+	void InsertText(const char * text, unsigned int len);
+
+	// write one character
+	virtual int_type overflow (int_type c);
+
+	// write multiple characters
+	virtual std::streamsize xsputn (const char* s, std::streamsize num);
+};
 
 class TextViewStream : public std::ostream
 {
-	NSTextView * textView;
+protected:
+	TextViewBuffer buf;
 public:
-	TextViewStream(NSTextView * _textView) : textView(_textView) {}
-
-	TextViewStream& operator<<(const std::string& str) {
-		[textView insertText:[NSString stringWithCString: str.c_str()]];
-		return *this;
+	TextViewStream(NSTextView * textView) : buf(textView) {
+		rdbuf(&buf);
 	}
 };

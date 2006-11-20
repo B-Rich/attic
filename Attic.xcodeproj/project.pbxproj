@@ -52,14 +52,14 @@
 		33E3FA660B1138D6000BC905 /* binary.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = binary.cc; path = ../attic/binary.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA680B1138D6000BC905 /* ChangeSet.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ChangeSet.cc; path = ../attic/ChangeSet.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA690B1138D6000BC905 /* DataPool.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DataPool.cc; path = ../attic/DataPool.cc; sourceTree = SOURCE_ROOT; };
-		33E3FA6A0B1138D6000BC905 /* DateTime.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DateTime.cc; path = ../attic/DateTime.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA6A0B1138D6000BC905 /* DateTime.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DateTime.cc; sourceTree = "<group>"; };
 		33E3FA6B0B1138D6000BC905 /* FileInfo.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = FileInfo.cc; path = ../attic/FileInfo.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA6C0B1138D6000BC905 /* Location.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Location.cc; path = ../attic/Location.cc; sourceTree = SOURCE_ROOT; };
 		33E3FA6D0B1138D6000BC905 /* md5.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = md5.c; path = ../attic/md5.c; sourceTree = SOURCE_ROOT; };
 		33E3FA6E0B1138D6000BC905 /* md5main.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = md5main.c; path = ../attic/md5main.c; sourceTree = SOURCE_ROOT; };
-		33E3FA6F0B1138D6000BC905 /* Path.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Path.cc; path = ../attic/Path.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA6F0B1138D6000BC905 /* Path.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Path.cc; sourceTree = "<group>"; };
 		33E3FA700B1138D6000BC905 /* Posix.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Posix.cc; path = ../attic/Posix.cc; sourceTree = SOURCE_ROOT; };
-		33E3FA710B1138D6000BC905 /* Regex.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Regex.cc; path = ../attic/Regex.cc; sourceTree = SOURCE_ROOT; };
+		33E3FA710B1138D6000BC905 /* Regex.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Regex.cc; sourceTree = "<group>"; };
 		33E3FA720B1138D6000BC905 /* StateChange.cc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StateChange.cc; path = ../attic/StateChange.cc; sourceTree = SOURCE_ROOT; };
 		33E3FB010B113EA9000BC905 /* acconf.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = acconf.h; path = ../attic/acconf.h; sourceTree = SOURCE_ROOT; };
 		33E3FB020B113EA9000BC905 /* Archive.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Archive.h; path = ../attic/Archive.h; sourceTree = SOURCE_ROOT; };
@@ -67,16 +67,16 @@
 		33E3FB040B113EA9000BC905 /* Broker.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Broker.h; path = ../attic/Broker.h; sourceTree = SOURCE_ROOT; };
 		33E3FB050B113EA9000BC905 /* ChangeSet.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ChangeSet.h; path = ../attic/ChangeSet.h; sourceTree = SOURCE_ROOT; };
 		33E3FB060B113EA9000BC905 /* DataPool.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DataPool.h; path = ../attic/DataPool.h; sourceTree = SOURCE_ROOT; };
-		33E3FB070B113EA9000BC905 /* DateTime.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DateTime.h; path = ../attic/DateTime.h; sourceTree = SOURCE_ROOT; };
+		33E3FB070B113EA9000BC905 /* DateTime.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DateTime.h; sourceTree = "<group>"; };
 		33E3FB080B113EA9000BC905 /* error.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = error.h; path = ../attic/error.h; sourceTree = SOURCE_ROOT; };
 		33E3FB090B113EA9000BC905 /* FileInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = FileInfo.h; path = ../attic/FileInfo.h; sourceTree = SOURCE_ROOT; };
 		33E3FB0A0B113EA9000BC905 /* Location.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Location.h; path = ../attic/Location.h; sourceTree = SOURCE_ROOT; };
 		33E3FB0B0B113EA9000BC905 /* Manager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Manager.h; path = ../attic/Manager.h; sourceTree = SOURCE_ROOT; };
 		33E3FB0C0B113EA9000BC905 /* md5.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = md5.h; path = ../attic/md5.h; sourceTree = SOURCE_ROOT; };
-		33E3FB0D0B113EA9000BC905 /* MessageLog.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = MessageLog.h; path = ../attic/MessageLog.h; sourceTree = SOURCE_ROOT; };
-		33E3FB0E0B113EA9000BC905 /* Path.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Path.h; path = ../attic/Path.h; sourceTree = SOURCE_ROOT; };
+		33E3FB0D0B113EA9000BC905 /* MessageLog.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MessageLog.h; sourceTree = "<group>"; };
+		33E3FB0E0B113EA9000BC905 /* Path.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Path.h; sourceTree = "<group>"; };
 		33E3FB0F0B113EA9000BC905 /* Posix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Posix.h; path = ../attic/Posix.h; sourceTree = SOURCE_ROOT; };
-		33E3FB100B113EA9000BC905 /* Regex.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Regex.h; path = ../attic/Regex.h; sourceTree = SOURCE_ROOT; };
+		33E3FB100B113EA9000BC905 /* Regex.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Regex.h; sourceTree = "<group>"; };
 		33E3FB110B113EA9000BC905 /* StateChange.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = StateChange.h; path = ../attic/StateChange.h; sourceTree = SOURCE_ROOT; };
 		33E3FB310B11443F000BC905 /* MainWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainWindowController.h; sourceTree = "<group>"; };
 		33E3FB320B11443F000BC905 /* MainWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainWindowController.mm; sourceTree = "<group>"; };
@@ -104,34 +104,27 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				33E3FB310B11443F000BC905 /* MainWindowController.h */,
-				33E3FB320B11443F000BC905 /* MainWindowController.mm */,
 				33E3FB460B1144EF000BC905 /* Application.h */,
 				33E3FB470B1144F0000BC905 /* Application.mm */,
-				3391F37D0B1164900094EDFC /* FlatDB.cc */,
-				3391F37E0B1164900094EDFC /* FlatDB.h */,
-				33E3FB040B113EA9000BC905 /* Broker.h */,
-				33E3FB050B113EA9000BC905 /* ChangeSet.h */,
-				33E3FB060B113EA9000BC905 /* DataPool.h */,
-				33E3FA680B1138D6000BC905 /* ChangeSet.cc */,
-				33E3FA690B1138D6000BC905 /* DataPool.cc */,
-				33E3FB090B113EA9000BC905 /* FileInfo.h */,
-				33E3FB0A0B113EA9000BC905 /* Location.h */,
+				33E3FB310B11443F000BC905 /* MainWindowController.h */,
+				33E3FB320B11443F000BC905 /* MainWindowController.mm */,
 				33E3FB0B0B113EA9000BC905 /* Manager.h */,
-				33E3FB0D0B113EA9000BC905 /* MessageLog.h */,
-				33E3FB0E0B113EA9000BC905 /* Path.h */,
-				33E3FB0F0B113EA9000BC905 /* Posix.h */,
-				33E3FB100B113EA9000BC905 /* Regex.h */,
-				33E3FB110B113EA9000BC905 /* StateChange.h */,
-				33E3FA6B0B1138D6000BC905 /* FileInfo.cc */,
+				33E3FB060B113EA9000BC905 /* DataPool.h */,
+				33E3FA690B1138D6000BC905 /* DataPool.cc */,
+				33E3FB0A0B113EA9000BC905 /* Location.h */,
 				33E3FA6C0B1138D6000BC905 /* Location.cc */,
-				33E3FA6F0B1138D6000BC905 /* Path.cc */,
-				33E3FA700B1138D6000BC905 /* Posix.cc */,
-				33E3FA710B1138D6000BC905 /* Regex.cc */,
-				33E3FA720B1138D6000BC905 /* StateChange.cc */,
 				33E3FB020B113EA9000BC905 /* Archive.h */,
-				33E3FB070B113EA9000BC905 /* DateTime.h */,
-				33E3FA6A0B1138D6000BC905 /* DateTime.cc */,
+				33E3FB040B113EA9000BC905 /* Broker.h */,
+				3391F37E0B1164900094EDFC /* FlatDB.h */,
+				3391F37D0B1164900094EDFC /* FlatDB.cc */,
+				33E3FB0F0B113EA9000BC905 /* Posix.h */,
+				33E3FA700B1138D6000BC905 /* Posix.cc */,
+				33E3FB090B113EA9000BC905 /* FileInfo.h */,
+				33E3FA6B0B1138D6000BC905 /* FileInfo.cc */,
+				33E3FB050B113EA9000BC905 /* ChangeSet.h */,
+				33E3FA680B1138D6000BC905 /* ChangeSet.cc */,
+				33E3FB110B113EA9000BC905 /* StateChange.h */,
+				33E3FA720B1138D6000BC905 /* StateChange.cc */,
 				33E3FBA70B114C8A000BC905 /* Attic.xcclassmodel */,
 			);
 			name = Classes;
@@ -203,6 +196,13 @@
 				33E3FB030B113EA9000BC905 /* binary.h */,
 				33E3FB080B113EA9000BC905 /* error.h */,
 				33E3FB0C0B113EA9000BC905 /* md5.h */,
+				33E3FB0E0B113EA9000BC905 /* Path.h */,
+				33E3FA6F0B1138D6000BC905 /* Path.cc */,
+				33E3FB100B113EA9000BC905 /* Regex.h */,
+				33E3FA710B1138D6000BC905 /* Regex.cc */,
+				33E3FB070B113EA9000BC905 /* DateTime.h */,
+				33E3FA6A0B1138D6000BC905 /* DateTime.cc */,
+				33E3FB0D0B113EA9000BC905 /* MessageLog.h */,
 				32CA4F630368D1EE00C91783 /* Attic_Prefix.pch */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
 				33E3FA660B1138D6000BC905 /* binary.cc */,

@@ -22,6 +22,9 @@ public:
   };
   
   MessageLog(std::ostream& _outs) : outs(_outs) {}
+  ~MessageLog() {
+    outs.flush();
+  }
 
   void SendMessage(Kind messageKind, const std::string& messageText) {
     switch (messageKind) {

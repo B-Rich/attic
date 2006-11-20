@@ -20,6 +20,7 @@ void InvokeSychronization(Attic::MessageLog& log)
   Manager atticManager(log);
 
   DataPool * pool = atticManager.CreatePool();
+  pool->LoggingOnly = true;
   pool->SetAncestor(new FlatDatabaseBroker("/home/johnw/src/attic/files.db"));
   pool->AddLocation(new PosixVolumeBroker("/home/johnw/src/misc"));
   pool->AddLocation(new PosixVolumeBroker("/tmp/misc"));

@@ -14,8 +14,11 @@
 
 - (IBAction)Synchronize:(id)sender
 {
-	TextViewStream viewStream(debugView);
+	[tabView selectTabViewItemAtIndex:1];
+
+	TextViewStream		viewStream(debugView);
 	Attic::MessageLog log(viewStream);
+
 	InvokeSychronization(log);
 }
 

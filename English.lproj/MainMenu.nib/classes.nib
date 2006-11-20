@@ -6,7 +6,7 @@
             ACTIONS = {Synchronize = id; }; 
             CLASS = MainWindowController; 
             LANGUAGE = ObjC; 
-            OUTLETS = {debugView = NSTextView; }; 
+            OUTLETS = {debugView = NSTextView; tabView = NSTabView; }; 
             SUPERCLASS = NSWindowController; 
         }
     ); 

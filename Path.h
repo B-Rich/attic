@@ -19,16 +19,9 @@ public:
     return temp;
   }
 
-  Path& operator+=(const Path& other) {
-    if (! empty() && (*this)[length() - 1] != '/' &&
-	! other.empty() && other[0] != '/')
-      this->std::string::operator +=("/");
-    this->std::string::operator +=(other);
-    return *this;
-  }
+  Path& operator+=(const Path& other);
 
-  static std::string GetFileName(const Path& path)
-  {
+  static std::string GetFileName(const Path& path) {
     int index = path.rfind('/');
     if (index != std::string::npos)
       return path.substr(index + 1);
@@ -40,8 +33,7 @@ public:
     return GetFileName(*this);
   }
 
-  static Path GetDirectoryName(const Path& path)
-  {
+  static Path GetDirectoryName(const Path& path) {
     int index = path.rfind('/');
     if (index != std::string::npos)
       return path.substr(0, index);
