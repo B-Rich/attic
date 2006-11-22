@@ -7,6 +7,8 @@ namespace Attic {
 void ChangeSet::PostChange(StateChange::Kind kind,
 			   FileInfo * entry, FileInfo * ancestor)
 {
+  scoped_lock lock(ChangeQueueMutex);
+
   StateChange * newChange = new StateChange(kind, entry, ancestor);
 
   ChangesMap::iterator i = Changes.find(entry->FullName);
@@ -16,8 +18,13 @@ void ChangeSet::PostChange(StateChange::Kind kind,
     assert(result.second);
   } else {
     newChange->Next = (*i).second;
-    (*i).second = newChange;
+    (*i).second	    = newChange;
   }
+
+  ChangeQueue.push_back(newChange);
+  ChangeQueueSize = ChangeQueue.size();
+
+  ChangeQueueSelector.notify_all();
 }
 
 void ChangeSet::PostAddChange(FileInfo * entry)

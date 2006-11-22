@@ -15,6 +15,16 @@ FlatDatabaseBroker::~FlatDatabaseBroker()
     Save(static_cast<FlatDBFileInfo *>(Repository->Root()));
 }
 
+void FlatDatabaseBroker::Create(FileInfo& entry)
+{
+  FileInfo * root = Repository->Root();
+  if (! root) {
+    root = CreateFileInfo("");
+    Repository->SetRoot(root);
+  }
+  Repository->FindOrCreateMember(entry.FullName);
+}
+
 FlatDBFileInfo * FlatDatabaseBroker::Load()
 {
   PosixVolumeBroker broker("/");

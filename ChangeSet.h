@@ -8,6 +8,8 @@
 #include <map>
 #include <deque>
 
+#include <boost/thread.hpp>
+
 namespace Attic {
 
 class Location;
@@ -36,12 +38,25 @@ public:
 
   typedef std::deque<StateChange *> ChangesArray;
 
-  ChangesMap Changes;
+  ChangesMap	   Changes;
+  ChangesArray	   ChangeQueue;
+  unsigned int	   ChangeQueueSize;
+  boost::mutex	   ChangeQueueMutex;
+  boost::condition ChangeQueueSelector;
+
+  typedef boost::mutex::scoped_lock scoped_lock;
 
   ChangeSet() {}
 
   void PostChange(StateChange::Kind kind, FileInfo * entry,
 		  FileInfo * ancestor);
+
+  unsigned int GetChange(unsigned int lastKnownSize) {
+    scoped_lock lock(ChangeQueueMutex);
+    while (ChangeQueueSize == lastKnownSize)
+      ChangeQueueSelector.wait(lock);
+    return ChangeQueueSize;
+  }
 
   void CompareLocations(const Location * origin,
 			const Location * ancestor);

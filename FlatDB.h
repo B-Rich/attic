@@ -81,7 +81,7 @@ public:
     assert(0); return false;
   }
   virtual void ReadAttributes(FileInfo&) const {
-    assert(0);
+    return;
   }
   virtual void SyncAttributes(const FileInfo&) {
     assert(0);
@@ -98,9 +98,7 @@ public:
   virtual void CreateDirectory(const Path&) {
     assert(0);
   }
-  virtual void Create(FileInfo&) {
-    assert(0);
-  }
+  virtual void Create(FileInfo&);
   virtual void Delete(FileInfo&) {
     assert(0);
   }

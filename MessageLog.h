@@ -3,10 +3,14 @@
 
 #include <iostream>
 #include <sstream>
+#include <deque>
 
 #include <assert.h>
+#include <boost/thread.hpp>
 
 namespace Attic {
+
+extern boost::mutex io_mutex;
 
 class MessageLog
 {
@@ -21,12 +25,54 @@ public:
     None
   };
   
-  MessageLog(std::ostream& _outs) : outs(_outs) {}
-  ~MessageLog() {
+  explicit MessageLog(std::ostream& _outs)
+    : outs(_outs), terminateQueue(false) {}
+
+  MessageLog(const MessageLog& other)
+    : outs(other.outs), terminateQueue(other.terminateQueue) {}
+
+private:
+  typedef std::pair<Kind, std::string> messageQueuePair;
+  typedef std::deque<messageQueuePair> messageQueueList;
+
+  messageQueueList messageQueue;
+
+  boost::mutex	   queueLock;
+  boost::condition queueCond;
+
+  bool terminateQueue;
+
+public:
+  void PostMessage(Kind messageKind, const std::string& messageText) {
+    boost::mutex::scoped_lock lock(queueLock);
+    messageQueue.push_back(messageQueuePair(messageKind, messageText));
+    queueCond.notify_one();
+  }
+
+  void operator()() {
+    boost::mutex::scoped_lock lock(queueLock);
+    do {
+      while (messageQueue.size() == 0)
+	queueCond.wait(lock);
+
+      for (messageQueueList::iterator i = messageQueue.begin();
+	   i != messageQueue.end();
+	   i++)
+	InsertMessage((*i).first, (*i).second);
+    }
+    while (! terminateQueue);
+
     outs.flush();
   }
 
-  void SendMessage(Kind messageKind, const std::string& messageText) {
+  void EndQueue() {
+    terminateQueue = true;
+    queueCond.notify_one();
+  }
+
+  void InsertMessage(Kind messageKind, const std::string& messageText) {
+    boost::mutex::scoped_lock lock(io_mutex);
+
     switch (messageKind) {
     case Message: break;
     case Note:    outs << "Note: "; break;
@@ -43,7 +89,7 @@ public:
 #define LOG(log, kind, stream) {			\
     std::ostringstream buf;				\
     buf << stream;					\
-    (log).SendMessage(MessageLog::kind, buf.str());	\
+    (log).PostMessage(MessageLog::kind, buf.str());	\
   }
 
 } // namespace Attic

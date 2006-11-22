@@ -63,6 +63,24 @@ Location::~Location()
     delete *i;
 }
 
+FileInfo * Location::FindMember(const Path& path)
+{
+  FileInfo * root = Root();
+  if (! root)
+    return NULL;
+  return root->FindMember(path);
+}
+
+FileInfo * Location::FindOrCreateMember(const Path& path)
+{
+  FileInfo * root = Root();
+  if (! root) {
+    root = SiteBroker->CreateFileInfo("");
+    SetRoot(root);
+  }
+  return root->FindOrCreateMember(path);
+}
+
 #if 0
 void Location::ComputeChanges(const Location * ancestor, ChangeSet& changeSet)
 {
@@ -172,7 +190,7 @@ void Location::Initialize()
 void Location::ApplyChange(MessageLog * log, const StateChange& change,
 			   const ChangeSet& changeSet)
 {
-  FileInfo * targetInfo(Root()->FindOrCreateMember(change.Item->FullName));
+  FileInfo * targetInfo(FindOrCreateMember(change.Item->FullName));
 
   std::string label;
   switch (change.ChangeKind) {
@@ -245,7 +263,12 @@ void Location::ApplyChange(MessageLog * log, const StateChange& change,
 	}
       }
 
-      change.Item->Copy(targetInfo->Pathname);
+      // jww (2006-11-21): A direct copy will not work here, rather I
+      // need to pass the source FileInfo to the target Broker, giving
+      // the FullName, and let it manage the installation of the
+      // contents.
+      //change.Item->Copy(targetInfo->Pathname);
+      change.Item->Copy(SiteBroker->FullPath(targetInfo->FullName));
       label = "U ";
     }
     else {

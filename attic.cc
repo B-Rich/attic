@@ -4,9 +4,15 @@
 
 #include <iostream>
 
+#include <boost/thread.hpp>
+
 bool DebugMode = false;
 
 using namespace Attic;
+
+namespace Attic {
+  boost::mutex io_mutex;
+}
 
 int main(int argc, char *args[])
 {
@@ -14,6 +20,9 @@ int main(int argc, char *args[])
 
   Location   optionTemplate;
   MessageLog messageLog(std::cout);
+
+  boost::thread messageThread(messageLog);
+
   Manager    atticManager(messageLog);
   DataPool * pool = atticManager.CreatePool();
 
@@ -149,6 +158,8 @@ Update the database to reflect foo's recent changes:\n\
   }
 
   atticManager.Synchronize();
+
+  messageLog.EndQueue();
 
 #if 0
   bool createdDatabase = false;

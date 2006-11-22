@@ -33,6 +33,12 @@ public:
   FileInfo * Root() const {
     return SiteBroker->FindRoot();
   }
+  void SetRoot(FileInfo * root) {
+    RootEntry = root;
+  }
+
+  FileInfo * FindMember(const Path& path);
+  FileInfo * FindOrCreateMember(const Path& path);
 
   typedef std::map<md5sum_t, FileInfoArray>  ChecksumMap;
   typedef std::pair<md5sum_t, FileInfoArray> ChecksumPair;

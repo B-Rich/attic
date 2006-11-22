@@ -104,6 +104,7 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				33E3FBA70B114C8A000BC905 /* Attic.xcclassmodel */,
 				33E3FB310B11443F000BC905 /* MainWindowController.h */,
 				33E3FB320B11443F000BC905 /* MainWindowController.mm */,
 				33E3FB0B0B113EA9000BC905 /* Manager.h */,
@@ -123,7 +124,6 @@
 				33E3FA680B1138D6000BC905 /* ChangeSet.cc */,
 				33E3FB110B113EA9000BC905 /* StateChange.h */,
 				33E3FA720B1138D6000BC905 /* StateChange.cc */,
-				33E3FBA70B114C8A000BC905 /* Attic.xcclassmodel */,
 			);
 			name = Classes;
 			sourceTree = "<group>";

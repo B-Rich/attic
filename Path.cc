@@ -55,7 +55,8 @@ Path& Path::operator+=(const Path& other)
   bool endsWithSlash	    = ! empty() && (*this)[length() - 1] == '/';
   bool otherBeginsWithSlash = ! other.empty() && other[0] == '/';
 
-  if (! endsWithSlash && ! otherBeginsWithSlash)
+  if (! empty() && ! endsWithSlash &&
+      ! other.empty() && ! otherBeginsWithSlash)
     this->std::string::operator +=("/");
 
   if (endsWithSlash && otherBeginsWithSlash)
