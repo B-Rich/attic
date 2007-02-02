@@ -96,6 +96,11 @@ bool FileInfo::Exists() const
   return HasFlags(FILEINFO_EXISTS);
 }
 
+void FileInfo::Delete()
+{
+  Repository->SiteBroker->Delete(*this);
+}
+
 void FileInfo::Create()
 {
   if (! Exists()) {
@@ -113,11 +118,6 @@ void FileInfo::CreateDirectory() const
     Repository->SiteBroker->CreateDirectory(DirectoryName());
 }
 
-void FileInfo::Delete()
-{
-  Repository->SiteBroker->Delete(*this);
-}
-
 void FileInfo::Copy(const Path& dest) const
 {
   Repository->SiteBroker->Copy(*this, dest);
@@ -128,14 +128,21 @@ void FileInfo::Move(const Path& dest)
   Repository->SiteBroker->Move(*this, dest);
 }
 
-void FileInfo::CopyAttributes(FileInfo& dest) const
+void FileInfo::Copy(const FileInfo& source)
 {
-  dest.SetFlags(Flags() | FILEINFO_READATTR);
+  Repository->SiteBroker->Copy(source, FullName);
 
-  if (HasFlags(FILEINFO_READCSUM))
-    dest.SetChecksum(Checksum());
+  CopyAttributes(source);
+}
 
-  CopyAttributes(dest.FullName);
+void FileInfo::CopyAttributes(const FileInfo& source)
+{
+  SetFlags(source.Flags() | FILEINFO_READATTR);
+
+  if (source.HasFlags(FILEINFO_READCSUM))
+    SetChecksum(source.Checksum());
+
+  source.CopyAttributes(FullName);
 }
 
 void FileInfo::CopyAttributes(const Path& dest) const

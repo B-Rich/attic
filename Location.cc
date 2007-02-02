@@ -304,6 +304,14 @@ void Location::ApplyChange(MessageLog * log, const StateChange& change,
     LOG(*log, Message, label << change.Item->Moniker());
 }
 
+void Location::Install(const FileInfo& newEntry)
+{
+  assert(Root());
+
+  FileInfo * entry = Root()->FindOrCreateMember(newEntry.FullName);
+  entry->Copy(newEntry);
+}
+
 void Location::RegisterChecksums(FileInfo * entry)
 {
   if (entry->IsRegularFile()) {

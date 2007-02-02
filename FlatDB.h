@@ -36,7 +36,16 @@ public:
     return fileKind;
   }
 
-  virtual void CopyAttributes(FileInfo& dest) const {}
+  virtual void WriteData(std::ostream& out) const {
+    assert(0);
+  }
+  virtual void ReadData(std::istream& in) {
+    assert(0);
+  }
+
+  virtual void Copy(const FileInfo& source) {}
+  virtual void CopyAttributes(const FileInfo& source) {}
+
   virtual bool CompareAttributes(const FileInfo& other) const {
     return false;
   }

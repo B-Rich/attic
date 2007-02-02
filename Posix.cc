@@ -253,26 +253,41 @@ bool PosixFileInfo::CompareAttributes(const FileInfo& other) const
 	   LinkTarget() == otherInfo->LinkTarget()));
 }
 
-void PosixFileInfo::CopyAttributes(FileInfo& dest) const
+void PosixFileInfo::WriteData(std::ostream& out) const
 {
-  PosixFileInfo * destInfo = dynamic_cast<PosixFileInfo *>(&dest);
-  if (! destInfo)
-    throw Exception("Attempt to copy POSIX attributes to non-POSIX file");
+  static_cast<PosixVolumeBroker *>(Repository->SiteBroker)->WriteFile(*this, out);
+}
 
-  if (destInfo->Permissions() != Permissions())
-    destInfo->SetPermissions(Permissions());
+void PosixFileInfo::ReadData(std::istream& in)
+{
+  //static_cast<PosixVolumeBroker *>(Repository->SiteBroker)->ReadFile(*this, in);
+}
 
-  if (destInfo->OwnerId() != OwnerId())
-    destInfo->SetOwnerId(OwnerId());
-  if (destInfo->GroupId() != GroupId())
-    destInfo->SetGroupId(GroupId());
+void PosixFileInfo::Copy(const FileInfo& source)
+{
+  static_cast<PosixVolumeBroker *>(Repository->SiteBroker)->Copy(source, Pathname);
+}
 
-  if (destInfo->LastAccessTime() != LastAccessTime())
-    destInfo->SetLastAccessTime(LastAccessTime());
-  if (destInfo->LastWriteTime() != LastWriteTime())
-    destInfo->SetLastWriteTime(LastWriteTime());
+void PosixFileInfo::CopyAttributes(const FileInfo& source)
+{
+  const PosixFileInfo * srcInfo = dynamic_cast<const PosixFileInfo *>(&source);
+  if (! srcInfo)
+    throw Exception("Attempt to copy non-POSIX attributes to POSIX file");
 
-  FileInfo::CopyAttributes(dest);
+  if (srcInfo->Permissions() != Permissions())
+    SetPermissions(srcInfo->Permissions());
+
+  if (srcInfo->OwnerId() != OwnerId())
+    SetOwnerId(srcInfo->OwnerId());
+  if (srcInfo->GroupId() != GroupId())
+    SetGroupId(srcInfo->GroupId());
+
+  if (srcInfo->LastAccessTime() != LastAccessTime())
+    SetLastAccessTime(srcInfo->LastAccessTime());
+  if (srcInfo->LastWriteTime() != LastWriteTime())
+    SetLastWriteTime(srcInfo->LastWriteTime());
+
+  FileInfo::CopyAttributes(source);
 }
 
 void PosixFileInfo::Dump(std::ostream& out, bool verbose, int depth) const
@@ -367,27 +382,18 @@ void PosixVolumeBroker::DeleteFile(const Path& path)
     throw Exception("Failed to delete file '" + path + "'");
 }
 
-void PosixVolumeBroker::CopyFile(const PosixFileInfo& entry, const Path& dest)
+void PosixVolumeBroker::CopyFile(const FileInfo& entry, const Path& dest)
 {
   assert(entry.Exists());
 
-  std::ifstream fin(entry.Pathname.c_str());
   std::ofstream fout(dest.c_str());
-
-  do {
-    char buf[8192];
-    fin.read(buf, 8192);
-    fout.write(buf, fin.gcount());
-  }
-  while (! fin.eof() && fin.good() && fout.good());
-
-  fin.close();
+  entry.WriteData(fout);
   fout.close();
 
   assert(Exists(dest));
 }
 
-void PosixVolumeBroker::UpdateFile(const PosixFileInfo& entry,
+void PosixVolumeBroker::UpdateFile(const FileInfo& entry,
 				   const PosixFileInfo& dest)
 {
 }
@@ -398,14 +404,27 @@ void PosixVolumeBroker::MoveFile(const PosixFileInfo& entry, const Path& dest)
     throw Exception("Failed to move '" + entry.Moniker() + "' to '" + dest + "'");
 }
 
+void PosixVolumeBroker::WriteFile(const PosixFileInfo& entry, std::ostream& out)
+{
+  std::ifstream fin(entry.Pathname.c_str());
+
+  do {
+    char buf[8192];
+    fin.read(buf, 8192);
+    out.write(buf, fin.gcount());
+  }
+  while (! fin.eof() && fin.good() && out.good());
+
+  fin.close();
+}
+
 void PosixVolumeBroker::DeleteDirectory(const Path& path)
 {
   if (rmdir(path.c_str()) == -1)
     throw Exception("Failed to remove directory '" + path + "'");
 }
 
-void PosixVolumeBroker::CopyDirectory(const PosixFileInfo& entry,
-				      const Path& dest)
+void PosixVolumeBroker::CopyDirectory(const FileInfo& entry, const Path& dest)
 {
 }
 
@@ -602,9 +621,9 @@ void PosixVolumeBroker::Delete(FileInfo& entry)
 void PosixVolumeBroker::Copy(const FileInfo& entry, const Path& dest)
 {
   if (entry.IsRegularFile())
-    CopyFile(static_cast<const PosixFileInfo&>(entry), dest);
+    CopyFile(entry, dest);
   else if (entry.IsDirectory())
-    CopyDirectory(static_cast<const PosixFileInfo&>(entry), dest);
+    CopyDirectory(entry, dest);
   else
     assert(0);
 }

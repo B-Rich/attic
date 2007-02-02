@@ -128,6 +128,48 @@ Location.  The Sync method causes all changes applied thus far to be
 flushed to disk.  The Root method allows the caller access to the
 topmost file information object.
 
+When applying changes, there are four types of events that occur:
+
+1. Adding a new file to the location
+2. Updating the contents & attributes of an existing file
+3. Updating only the attributes of an existing file
+4. Removing a file (deleting it) from the location
+
+Because the Location in question may be remote, or offline, and
+because the object being copied may likewise be difficult to access,
+file operations are done through the Location, Broker and FileInfo
+objects.  In sum:
+
+1.  If a known file (a FileInfo) from one Location (A) is to be added
+    to another Location (B), this is done by calling B's
+    `Install(const FileInfo&)` method, passing it the file to be
+    installed at the location.
+
+    The copy operation will proceed by first creating a new (and
+    non-existent) FileInfo in the receiving Location to represent
+    where it will be copied to, and then by calling this object's
+    `Copy(const FileInfo&)` method, passing the existing FileInfo as
+    the argument.
+
+2.  If a file (A) is to update the contents and attributes of an
+    existing file in the target Location (B), this is done by calling
+    B's `Copy(const FileInfo&)` method, passing the first file as the
+    argument.  This copy -- over an existing file -- will use the
+    rsync algorithm if possible.
+
+3.  If a file (A) is to update the attributes of an existing file in
+    the target Location (B), this is done by calling B's
+    `CopyAttributes(const FileInfo&)` method, passing the first file
+    as its argument.
+
+4.  If a file (B) in the target Location is to be deleted, it will
+    first be removed from disk, then the FileInfo record is removed
+    from its parent for that version of the tree.
+
+This brief summary describes the actual work that Attic "does" during
+a synchronization.  Most of the rest of its complexity is in how it
+goes about accomplishing these four steps -- and when.
+
     void  CopyOptions(const Location& optionTemplate)
 
 This method can be used to copy the option settings from another

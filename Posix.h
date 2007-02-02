@@ -69,8 +69,12 @@ public:
   Path LinkTarget() const;
   void SetLinkTarget(const Path& path);
 
+  virtual void WriteData(std::ostream& out) const;
+  virtual void ReadData(std::istream& in);
+
   virtual bool CompareAttributes(const FileInfo& other) const;
-  virtual void CopyAttributes(FileInfo& dest) const;
+  virtual void Copy(const FileInfo& source);
+  virtual void CopyAttributes(const FileInfo& source);
   virtual void Dump(std::ostream& out, bool verbose, int depth) const;
 
   friend class PosixVolumeBroker;
@@ -86,13 +90,14 @@ class PosixVolumeBroker : public VolumeBroker
 
   void CreateFile(PosixFileInfo& entry);
   void DeleteFile(const Path& path);
-  void CopyFile(const PosixFileInfo& entry, const Path& dest);
-  void UpdateFile(const PosixFileInfo& entry, const PosixFileInfo& dest);
+  void CopyFile(const FileInfo& entry, const Path& dest);
+  void UpdateFile(const FileInfo& entry, const PosixFileInfo& dest);
   void MoveFile(const PosixFileInfo& entry, const Path& dest);
+  void WriteFile(const PosixFileInfo& entry, std::ostream& out);
 
   //void CreateDirectory(const PosixFileInfo& entry);
   void DeleteDirectory(const Path& entry);
-  void CopyDirectory(const PosixFileInfo& entry, const Path& dest);
+  void CopyDirectory(const FileInfo& entry, const Path& dest);
   void MoveDirectory(const PosixFileInfo& entry, const Path& dest);
 
 public:
@@ -125,12 +130,14 @@ public:
   virtual void CreateDirectory(const Path& path);
   virtual void Create(FileInfo& entry);
   virtual void Delete(FileInfo& entry);
-  virtual void Copy(const FileInfo& entry, const Path& dest);
+  virtual void Copy(const FileInfo& source, const Path& dest);
   virtual void Move(FileInfo& entry, const Path& dest);
 
   virtual Path GetSignature(const FileInfo& entry) const { return Path(); }
   virtual Path CreateDelta(const FileInfo& entry, const Path& sigfile) { return Path(); }
   virtual void ApplyDelta(const FileInfo& entry, const Path& delta) {}
+
+  friend class PosixFileInfo;
 };
 
 } // namespace Attic

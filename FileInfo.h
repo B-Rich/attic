@@ -150,17 +150,24 @@ public:
 
   virtual unsigned long long Length() const = 0;
 
+  void Delete();
+  void Update(const FileInfo& source);
+
   Path DirectoryName() const {
     return FullName.DirectoryName();
   }
+
   void Create();
   void CreateDirectory() const;
-  void Delete();
   void Copy(const Path& dest) const;
   void Move(const Path& dest);
   void CopyAttributes(const Path& dest) const;
 
-  virtual void CopyAttributes(FileInfo& dest) const = 0;
+  virtual void WriteData(std::ostream& out) const = 0;
+  virtual void ReadData(std::istream& in) = 0;
+
+  virtual void Copy(const FileInfo& source) = 0;
+  virtual void CopyAttributes(const FileInfo& source) = 0;
   virtual bool CompareAttributes(const FileInfo& other) const = 0;
   virtual void Dump(std::ostream& out, bool verbose, int depth = 0) const = 0;
 

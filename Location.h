@@ -60,6 +60,7 @@ public:
   mutable ChangeSet * CurrentChanges;
 
   void ApplyChanges(const ChangeSet& changeSet);
+  void Install(const FileInfo& newEntry);
 
   std::vector<Regex *> Regexps;
 
