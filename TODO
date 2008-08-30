@@ -1,4 +1,12 @@
-- Do directory building piecemeal, so that transfers may begin right
-  away, and huge memory footprints are not necessary.
+ATTIC  -*- mode: org; fill-column: 78 -*-
 
-- Preserve hard links.
+#+STARTUP: overview
+#+ARCHIVE: TODO-OLD::
+#+SEQ_TODO: TODO(@) STARTED(@) WAITING(@) DELEGATED(@) | DONE(@) DEFERRED(@) CANCELLED(@) WONTFIX(@) WORKSFORME(@) INVALID(@) DUPLICATE(@) NOTE
+#+TAGS: FEATURE(f) DOCS(d) WEBSITE(w) BUILD(b)
+#+CATEGORY: Attic
+
+* TODO [#B] Do directory building piecemeal
+  This is so that transfers may begin right away, and huge memory footprints
+  are not necessary.
+* TODO [#B] Preserve hard links
